@@ -1,0 +1,102 @@
+#====================
+# Bro Cutting
+#====================
+bro -Cr file.pcap (generates the logs)
+bro-cut -d field1 field2 < somefile.log
+- omit specific fields to cut all
+- < means slurp from, vs cat piping
+- -d is human-readable timestamp (ts) field
+
+Find what fields are in a log
+head -n file.log | grep -P '^#fields' | sed -e 's/\t\+/ /g'
+
+Create various data exports with bro-cut
+Make simple CSV:
+bro-cut somefile.log | tr '\t' ','
+
+Make CSV with column names:
+head somefile.log | grep -P '^#fields' | tr '\t' ',' | sed -e 's/#fields,//g' > somefile.log.csv
+bro-cut somefile.log | sed -e 's/\t\+/,/g' >> somefile.log.csv
+(sometimes you may need a different delimeter, when commas may be a value in a log field)
+
+Enable Heartbleed, SMB, and VLAN Logging:
+Uncomment the following lines in /opt/bro/share/bro/site/local.bro (should be at or near the bottom):
+@load policy/protocols/ssl/heartbleed
+@load policy/protocols/smb
+@load policy/protocoles/conn/vlan-logging
+
+
+#====================
+# Common Fields
+# https://www.bro.org/sphinx/script-reference/log-files.html
+#====================
+conn.log
+ts uid id.orig_h id.orig_p id.resp_h id.resp_p proto service duration orig_bytes resp_bytes conn_state local_orig local_resp missed_bytes history orig_pkts orig_ip_bytes resp_pkts resp_ip_bytes tunnel_parents
+
+dns.log
+ts uid id.orig_h id.orig_p id.resp_h id.resp_p proto trans_id rtt query qclass qclass_name qtype qtype_name rcode rcode_name AA TC RD RA Z answers TTLs rejected
+
+files.log
+ts fuid tx_hosts rx_hosts conn_uids source depth analyzers mime_type filename duration local_orig is_orig seen_bytes total_bytes missing_bytes overflow_bytes timedout parent_fuid md5 sha1 sha256 extracted
+
+http.log
+ts uid id.orig_h id.orig_p id.resp_h id.resp_p trans_depth method host uri referrer version user_agent request_body_len response_body_len status_code status_msg info_code info_msg tags username password proxied orig_fuids orig_filenames orig_mime_types resp_fuids resp_filenames resp_mime_types
+
+packet_filter.log
+ts node filter init success
+
+ssl.log
+ts uid id.orig_h id.orig_p id.resp_h id.resp_p version cipher curve server_name resumed last_alert next_protocol established cert_chain_fuids client_cert_chain_fuids subject issuer client_subject client_issuer
+
+weird.log
+ts uid id.orig_h id.orig_p id.resp_h id.resp_p name addl notice peer
+
+x509.log
+ts id certificate.version certificate.serial certificate.subject certificate.issuer certificate.not_valid_before certificate.not_valid_after certificate.key_alg certificate.sig_alg certificate.key_type certificate.key_length certificate.exponent certificate.curve san.dns san.uri san.email san.ip basic_constraints.ca basic_constraints.path_len
+
+
+#====================
+# conn.log history field
+# https://www.bro.org/sphinx/scripts/base/protocols/conn/main.bro.html#type-Conn::Info
+#====================
+Letter 	Meaning
+s 	a SYN w/o the ACK bit set
+h 	a SYN+ACK (“handshake”)
+a 	a pure ACK
+d 	packet with payload (“data”)
+f 	packet with FIN bit set
+r 	packet with RST bit set
+c 	packet with a bad checksum
+t 	packet with retransmitted payload
+i 	inconsistent packet (e.g. FIN+RST bits set)
+q 	multi-flag packet (SYN+FIN or SYN+RST bits set)
+^ 	connection direction was flipped by Bro’s heuristic
+
+If the event comes from the originator, the letter is in upper-case; if it comes from the responder, it’s in lower-case.
+Multiple packets of the same type will only be noted once
+(e.g. we only record one “d” in each direction, regardless of how many data packets were seen.).
+
+
+#====================
+# conn.log conn_state field
+# https://www.bro.org/sphinx/scripts/base/protocols/conn/main.bro.html#type-Conn::Info
+#====================
+conn_state 	Meaning
+S0	Connection attempt seen, no reply.
+S1 	Connection established, not terminated.
+SF 	Normal establishment and termination. Note that this is the same symbol as for state S1. You can tell the two apart because for S1 there will not be any byte counts in the summary, while for SF there will be.
+REJ 	Connection attempt rejected.
+S2 	Connection established and close attempt by originator seen (but no reply from responder).
+S3 	Connection established and close attempt by responder seen (but no reply from originator).
+RSTO 	Connection established, originator aborted (sent a RST).
+RSTR 	Responder sent a RST.
+RSTOS0 	Originator sent a SYN followed by a RST, we never saw a SYN-ACK from the responder.
+RSTRH 	Responder sent a SYN ACK followed by a RST, we never saw a SYN from the (purported) originator.
+SH 	Originator sent a SYN followed by a FIN, we never saw a SYN ACK from the responder (hence the connection was “half” open).
+SHR 	Responder sent a SYN ACK followed by a FIN, we never saw a SYN from the originator.
+OTH 	No SYN seen, just midstream traffic (a “partial connection” that was not later closed).
+
+
+#====================
+# future use
+#====================

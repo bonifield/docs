@@ -1,0 +1,88 @@
+================
+
+TCPDUMP - record to file and display on screen
+tcpdump -nn -i eth0 -U -s0 host X and host Y -w - | tee file.pcap | tcpdump -r -
+# -U dumps buffer to tee stdin/ pcap immediately, instead of on exit - this is required so you can then read the pcap on screen!
+# -w - passes tcpdump to stdout
+# tee file.pcap writes to binary file, and sends to stdout
+# tcpdump -r - reads from stdout produced by tee, which is a product of the first tcpdump -U
+-------
+tcpdump tcpdump -nn -i eth0 -s 0 -C 1 -W 5 -w file.pcap
+# -C 1 = rotate files every 1 MB / files will have the same name specified with -w, appending an incrementing number as each file is generated
+# if used with -G 180 (rotate every 180 seconds), files still won't use the native -G time-appended name format
+# if used with -W 5 (limit to 5 rotating files), filenames will have proper leading 0s to allow for sorting
+
+================
+
+Python HTTP stuff
+request=re.compile('(GET|POST|PUT|HEAD|OPTIONS|DELETE|TRACE|CONNECT).+?(?=\r\n)',re.MULTILINE|re.DOTALL)
+response=re.compile('HTTP.+?(?=\r\n)',re.MULTILINE|re.DOTALL)
+
+================
+SUPER SPLIT BLUECOAT LOGS INTO CSV FORMAT
+zgrep "" LOGFILENAME | awk -F'"' '{for(i=2;i<=NF;i++)if(i%2==0)gsub(" ","__SPACE__",$i);}1' OFS="\"" | grep -P '^2016' | sed -e 's/ \+/ /g;s/ /,/g;s/__SPACE__/ /g' (use "| awk -F ',' '{print $FIELDNUMBER}'" if desired)
+
+SUPER SPLIT WITH FILENAME (MAIN PROCESS)
+zgrep -H "" LOGFILENAME | grep -Pv 'gz:#' | awk -F'"' '{for(i=2;i<=NF;i++)if(i%2==0)gsub(" ","__SPACE__",$i);}1' OFS="\"" | sed -e 's/ \+/ /g;s/ /,/g;s/__SPACE__/ /g;s/gz:2016/gz,2016/g'
+
+================
+REPLACE ALL SPACES BETWEEN QUOTES
+awk -F'"' '{for(i=2;i<=NF;i++)if(i%2==0)gsub(" ","__SPACE__",$i);}1' OFS="\"" INPUTFILE.txt
+
+PROXY CHOP - GET EXES AND RELEVANT FIELDS
+awk -F'"' '{for(i=2;i<=NF;i++)if(i%2==0)gsub(" ","__SPACE__",$i);}1' OFS="\"" someInput.txt | sed -e 's/\"//g' | awk '{print $1","$2","$4","$14","$18","$21}' | sed -e 's/__SPACE__/ /g' > someOutput.csv
+
+==================
+
+AWK PRINT ALL AFTER FIELD
+awk '{s="",for(i=6;i<=NF;i++) s = s $i " "; print s}' (prints all after field 5, aka 6 onward)
+
+FORCE OFS TO SINGLE QUOTE (COMBINES FIELDS 6 ONWARD INTO ONE QUOTED FIELD)
+awk -v quote="'" $1=$1 '{s="",for(i=6;i<=NF;i++) s = s $i " "; print quote $1 quote, quote $2 quote, quote $3 quote, quote $4 quote, quote $5 quote, quote s quote}'
+
+QUICK COMPARE TWO COLUMNS
+awk -F "-" '$1!=$2 {print $1,"diff",$2}; $1=$2 {print $1,"same",$2}'
+
+==================
+
+sed -e ':a;N;$!ba;s/\n/,/g'
+sed -e 's/ \+//g'
+sed -e 's/\t\+/ /g'
+sed -r 's/\s+/,/'
+sed -i 's/oldInPlaceText/newInPlaceText/g' $1
+sed -i 's/.*INSERTAFTERTHIS.*/&\n\tNEWLYINSERTEDINDENTEDLINEAFTERMATCH/' $1
+
+==================
+
+date +'%Y%m%d%H%M%S%N'
+
+==================
+
+declare array=()
+tcpdump -nnAr [FILENAME] 2>&1 | grep -P 'iframe.*' | grep -Po '(?<=src=\").[^\s\"]*' | cut -d '/' -f3
+do arrayIframe+=($line)
+
+^^^***tshark ... -e text -Y data-text-lines
+
+tcpdump -nnAr sample.pcap 2> /dev/null | grep -Po '(?<=^Host: ).*($) | sort -u
+
+==================
+
+PYTHON REGEX MISC
+# .match  = beginning of a checked object
+# .search = anywhere in a checked object
+# .findall = find all (multiple) matches in a checked object
+string0 = "thisistotallynotastring"
+n = re.compile('not', re.MULTILINE|re.DOTALL)
+hit = n.search(string0)
+if hit:
+	print hit.group(0)
+-------
+string0 = "thisistotallynotastring"
+hit = re.search('not', string0)
+if hit:
+	print hit.group(0)
+  
+==================
+
+re.compile('\d{3}-\d{2}-\d{4}|XXX-XX-XXXX', re.MULTILINE|re.DOTALL)

@@ -1,0 +1,71 @@
+#===========================
+# First Hits Query - Domain
+#===========================
+sourcetype="pcapstats" | stats sparkline(count) as hits, earliest(_time) as firstHit, latest(_time) as latestHit, count by httphost | eval firstHit=strftime(firstHit, "%x %X") | eval latestHit=strftime(latestHit, "%x %X") | sort -firstHit
+
+#===========================
+# One-Shot Upload
+#===========================
+sudo /opt/splunk/bin/splunk add oneshot "/path/to/csv/or/json/file.csv" -sourcetype yoursourcetype -index yourindex -rename-source yoursource -auth SPLUNKTOKENHERE
+# -rename-source is better than -source because you can't upload another file with the same name if the source doesn't change
+
+#===========================
+# FIRST HITS DASHBOARD
+#===========================
+<form>
+	<label>This is the dashboard label</label>
+
+	<!-- TIME WINDOW - create a token, set default time, search automatically when time is changed -->
+	<fieldset submitButton="false" autoRun="True">
+		<input type="time" token="dashTime" searchWhenChanged="true">
+		<label>Time</label>
+		<default>
+			<earliest>-7d@d</earliest>
+			<latest>now</latest>
+		</default>
+		</input>	
+	</fieldset>
+	
+	<!-- BASE QUERY - must declare fields desired in output, and create a base query - you can have multiple base queries, depending on the performance desired -->
+	<search id="mainQuery1">
+		<query>sourcetype="food" | fields _time, taco, burrito, enchilada, chimichanga</query>
+		<earliest>$dashTime.earliest$</earliest>
+		<latest>$dashTime.latest$</latest>
+	</search>
+	
+	<!-- ROW 1 OUTPUT ITEMS DRIVEN BY BASE QUERY -->
+	<row>
+		<table>
+			<title>First Row, Left Table - Taco</title>
+			<search base="mainQuery1">
+				<query> | stats count earliest(_time) as firstHit by taco | fields taco, firstHit, count | fieldformat firstHit=strftime(firstHit, "%x" %X) | sort -firstHit | head 10</query>
+			</search>
+		</table>
+
+		<table>
+			<title>First Row, Right Table - Burrito</title>
+			<search base="mainQuery1">
+				<query> | stats count earliest(_time) as firstHit by burrito | fields burrito, firstHit, count | fieldformat firstHit=strftime(firstHit, "%x" %X) | sort -firstHit | head 10</query>
+			</search>
+		</table>
+	</row>
+	
+	<!-- ROW 2 OUTPUT ITEMS DRIVEN BY BASE QUERY -->
+	<row>
+		<table>
+			<title>Second Row, Left Table - Enchilada</title>
+			<search base="mainQuery1">
+				<query> | stats count earliest(_time) as firstHit by enchilada | fields enchilada, firstHit, count | fieldformat firstHit=strftime(firstHit, "%x" %X) | sort -firstHit | head 10</query>
+			</search>
+		</table>
+
+		<table>
+			<title>Second Row, Right Table - Chimichanga</title>
+			<search base="mainQuery1">
+				<query> | stats count earliest(_time) as firstHit by chimichanga | fields chimichanga, firstHit, count | fieldformat firstHit=strftime(firstHit, "%x" %X) | sort -firstHit | head 10</query>
+			</search>
+		</table>
+	</row>
+
+</form>
+#===========================

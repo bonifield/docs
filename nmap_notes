@@ -1,0 +1,200 @@
+#====================
+# NMAP NOTES
+#====================
+
+#============
+# Phases
+#============
+
+Target Enumeration --> Host Discovery --> Reverse DNS Resolution --> Port Scanning --> 
+Version Detection --> OS Detection --> Traceroute --> Script Scanning --> Output
+
+#============
+# Readable Reports
+#============
+- must include nmap.xsl with the xml report (must be in same directory)
+cp /usr/share/nmap/nmap.xsl /your/destination/directory/
+nmap [-switches] -oX /your/destination/directory/scan.xml --stylesheet=nmap.xsl
+# useful with --open and --reason switches
+
+#============
+# TCPDump reminder - always collect your scans
+#============
+tcpdump -i eth0 -s0 host [your ip] -w scan.pcap
+# exit TCPDump when your scan finishes
+
+#============
+# States
+#============
+Open # accepting connections
+Closed # able to make a request, but no app is using it
+Filtered # can't determine state, something is blocking access
+Unfiltered # port is accessible, can't determine if open or closed (receive RSTs) / only during ACK scan / for mapping firewall states
+Open|Filtered # can't determine if open or filtered / open, no response received / uDP, IP, FIN/Null/Xmas only
+Closed|Filtered # unable to determine if closed or filtered / appears only in idle scans
+
+#============
+# Output Types
+#============
+-oG # Grepable - can pipe through awk if needed
+-oX # XML, requires .xsl file in same directory
+-oA # Grepable and XML plus "normal" output
+
+#============
+# Common Scans
+#============
+
+#------
+# Basic warmup on sample network with few restrictions
+#------
+Probe /24 for hosts that are online, only show open:
+nmap --reason -sn [IP/24] -oG pingsweep.txt
+
+Output online hosts to targetlist.txt
+awk '{print $2}' pingsweep.txt | grep -v 'Nmap' >> targetlist.txt
+#------
+
+# | grep -PB1 'up|echo-reply' # B1 shows 1 line before match
+
+Fast (top 100) Syn Scan:
+nmap --reason --open -F -sS [IP]
+
+OS and version detection on host that is alive, output to xml w/ stylesheet
+nmap --reason --open -Pn -O -sV [IP] -oX output.xml --stylesheet=nmap.xsl
+
+Aggressive detection scan:
+nmap --reason --open -Pn -A [IP] -oX output.xml --stylesheet=nmap.xsl
+
+HTTP-Title script
+nmap --reason --open --script=http-title [IP]
+
+OS detection on host known to be online (requires root/sudo):
+nmap --reason -Pn -O [IP]
+
+TODO:  append other scan docs here
+
+#============
+# Nmap Help Summary
+#============
+# nmap -h, and man nmap
+Specify Targets:
+-iL [filename] # input list of hosts or networks
+-iR [num] # random num targets
+--exclude [host1, host2, host3] # exclude host/list of comma-separated hosts
+--excludefile [filename] # opposite of -iL
+
+Host Discovery:
+-sL # list of targets
+-sn # ping scan, disable port scan (previously -sP)
+-Pn # treat all hosts as online, skip discovery
+-PS/PA/PU/PY # TCP SYN/ACK, UDP, SCTP discovery
+-PE/PP/PM # ICMP echo, timestamp, netmask request discovery probes
+-PO [list] # IP protocol ping
+-n # NEVER RESOLVE DNS
+-R # always resolve DNS (plz no)
+--dns-servers # custom DNS servers
+--system-dns # use the OS DNS resolver
+--traceroute # trace hop path to each host
+
+Scan Techniques
+-sP # ping sweep
+-sS/sT/sA/sW/sM # TCP Syn/Connect/Ack (for firewalls)/Window/Maimon
+-sU/sN/sF/sX # UDP, TCP Null, TCP Fin, TCP Xmas
+--scanflags [flags] # custom flag scan
+-sI <zombie host[:probeport]> # idle scan, requires additional internal knowledge
+-sY/sZ # SCTP INIT/COOKIE-ECHO (SCTP equivalent to sT)
+-sO # IP protocol scan, uses protocol numbers (not port nums)
+-b <FTP relay host> # FTP bounce scan
+
+Port Specification and Scan Order:
+-p [port-range] # only specific ports, comma or hyphen separated
+-PR # ARP scan, disable this default function with --disable-arp-ping
+-PS/PA/PU/OY # SYN/ACK/UDP/SCTP scans - configurable with port lists
+-F # fast mode, top 100 ports (default is 1000)
+-r # scan ports consecutively, don't randomize
+--allports # all ports scanned
+--top-ports [number] # scan x top ports
+--port-ration [ratio] # scan ports more common than ratio
+
+Service/Version Detection:
+-sV # probe open ports for service/version info
+--version-intensity [level] # 0 (lightest), 9 (try all probes)
+--version-light # limit to probe level 2, most likely
+--version-all # intensity probe level 9
+--version-trace # show detailed version scan (debugging)
+
+Script Scan:
+-sC # equal to --script=default (some of these scripts are considered intrusive)
+--script=[lua script] # comma-separated list of lua scripts
+--script-args=[arg1=val1,arg2=val2,etc] # provide arguements to scripts
+--script-args-file=[filename] # provide args that exist in a file
+--script-trace # show all data sent and received
+--script-updatedb # update script database
+--script-help=[script name] # show help about script (can be comma-separated list of scripts)
+--script "http-*" # all scripts that begin with http
+--script "default and safe" # as described, non-intrusive scripts only
+--script "(default or safe or intrusive) and not http-*" # as described
+
+OS Detection:
+-O # enable OS detection
+--osscan-limit # limit OS detection to promising targets
+--osscan-guess # guess OS more aggressively
+
+Timing and Performance:
+[time] is in seconds, or append "ms" (milliseconds)
+supports ms, s, m, h
+-T [0-5]: intensity level with 5 being insane, T3 (normal) is nmap default
+--min-hostgroup/max-hostgroup [size] # parallel host scan group sizes
+--min-parallelism/max-parallelism [numprobes] # count of allowed outstanding probes
+--min-rtt-timeout/max-rtt-timeout/initial-rtt-timeout [time]: specify probe round trip time (100ms is for a local lan)
+--max-retries [tries] # caps number of port scan retransmissions
+--host-timeout [time] # give up on target after this time, set to 30m or 10m, etc 
+--scan-delay/--max-scan-delay [time] # adjust delay between probes
+--min-rate/--max-rate [num] send packets no slower/faster than [num] per second / affects the entire scan
+
+Firewall/IDS Evasion and Spoofing:
+-f; mtu [val] # fragment packets (optionally with given mtu) - use with --send-eth if local host is causing problems
+-D [decoy1,decoy2,etc] # cloak a scan with decoys
+-S [IP] # spoof source address
+-e [iface] # use specified interface
+-g/--source-port [num] # use a given port number
+--data-length [num] # append random data to sent packets
+--ip-options [opts] # send packets with specified IP options
+--ttl [num] # set IP TTL
+--spoof-mac [mac] # spoof MAC, providing 0 as an argument generates a completely random mac
+--badsum # send packets with a bogus TCP/UDP/SCTP checksum
+--randomize-hosts # randomize host list order
+
+Output:
+-oN/oX/G # normal, XML, Grepable
+-oA # output all (N/X/G)
+-v/vv # increase verbosity
+-d/dd # increase debugging level
+--reason # display the reason a port is in a particular state
+--open # only show open/possibly open ports
+--packet-trace # show all packets sent and received
+--iflist # print host interfaces and routes (for debugging)
+--log-errors # log errors/warning to the normal-format output file
+--append-output # append to, rather than clobber, specified output files - don't use with -oX
+--resume [filename] # resume an aborted scan
+--stylesheet [path] # XSL stylesheet to transform XML output to HTML
+--webxml # reference stylesheet from Nmap.org for more portable XML
+--no-stylesheet # prevent associating of XSL stylesheet with XML output
+--iflist # interface list and system routes
+
+Misc:
+-6 # enable IPv6 scanning
+-A # enable OS detection, version detection, script scanning, and traceroute
+--datadir [dir] # specify custom Nmap data file location
+--send-eth/--send-ip # send using raw ethernet frames or IP packets
+--privileged # assume user is fully privileged
+--unprivileged # assume user lacks raw socket privs
+-V # print version number
+-h # print help summary page
+
+Runtime Interaction (while Nmap is scanning):
+v / V # increase or decrease verbosity
+d / D # increase or decrease debugging level
+p / P # turn on/off packet tracing
+? # runtime interaction help screen
+[any other key] # print out a status message

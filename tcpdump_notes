@@ -1,0 +1,120 @@
+#====================
+# TCPDump - Basic Details
+#====================
+
+-A = print content of each packet (minus link level header) in ASCII
+-X = print content of each packet (minus link level header) in HEX
+-t = don't print timestamp
+-tt = print epoch timestamp
+-ttt = print delta timestamp between current and previous line
+-tttt = print date + hours/minutes/seconds/fractions of a second
+-ttttt = print delta between current and first line
+-n = don't resolve domain names
+-nn = don't resolve domain or port names
+-q = quiet/simple output
+-r = read from file
+-s = ONLY ON CAPTURE -- set snaplength (0 = set snaplen equivalent to 65535, aka the whole packet)
+-S = print absolute sequence numbers
+-U = packet-buffered output, used with -w
+-w = output to file
+-e = print link-level header on each dump line
+-v = verbose output
+-vv = more verbose
+-vvv =  very verbose
+
+BPF:
+host, src a.b.c.d, dst a.b.c.d, net a.b.c.d/24, port x, icmp, portrange x-y, less x, greater y
+and (or &&)
+or (or ||)
+not (or !)
+grouping - use parentheses:  tcpdump src 192.168.1.25 and (dst port 21 or 22)
+
+IPv6:
+tcpdump ip6
+
+TCP control bits (flags):
+#ex. 'tcp[13] & 16!=0'
+#tcp[13] looks at offset 13 in the TCP header
+# & 16!=0 means look at the bits that aren't 0, or off
+
+UAPRSF
+See all packets with x flag set:
+URG = tcpdump 'tcp[13] & 32!=0'
+ACK = tcpdump 'tcp[13] & 16!=0'
+PSH = tcpdump 'tcp[13] & 8!=0'
+RST = tcpdump 'tcp[13] & 4!=0'
+SYN = tcpdump 'tcp[13] & 2!=0'
+FIN = tcpdump 'tcp[13] & 1!=0'
+SYNACK = tcpdump 'tcp[13]=18'
+# SYN=2, ACK=16, thus SYNACK=18
+
+TCPFLAGS option
+tcpdump 'tcp[tcpflags] & & tcp-syn != 0'
+
+#====================
+# TCPDump - Reading/Processing Highlights
+#====================
+
+tcpdump -nnAr file.pcap 2>&1
+# basic output in ASCII
+# 2>&1 suppresses the TCPDump informational lines output
+
+tcpdump -nnttttqr file.pcap 
+# don't resolve names, normal timestamp, quiet/simple output
+
+tcpdump -nnAr file.pcap 'host 192.168.1.25'
+# capture to/from .25 IP
+
+#====================
+# TCPDump - Writing/Capturing Highlights
+#====================
+
+TCPDUMP - record to file and display on screen
+tcpdump -nn -i eth0 -U -s0 host X and host Y -w - | tee file.pcap | tcpdump -r -
+# -U dumps buffer to tee stdin/ pcap immediately, instead of on exit - this is required so you can then read the pcap on screen!
+# -w - passes tcpdump to stdout
+# tee file.pcap writes to binary file, and sends to stdout
+# tcpdump -r - reads from stdout produced by tee, which is a product of the first tcpdump -U
+-------
+tcpdump tcpdump -nn -i eth0 -s 0 -C 1 -W 5 -w file.pcap
+# -C 1 = rotate files every 1 MB / files will have the same name specified with -w, appending an incrementing number as each file is generated
+# if used with -G 180 (rotate every 180 seconds), files still won't use the native -G time-appended name format
+# if used with -W 5 (limit to 5 rotating files), filenames will have proper leading 0s to allow for sorting
+
+#===================
+# TCPDump Permissions
+#===================
+
+#============
+# Understand what you're doing
+#============
+man 7 capabilities - overview
+focus on CAP_NET...etc
+CAP_NET_RAW (use RAW and PACKET sockets, binding for transparent proxying)
+|
+V
+Thread capability sets
+File capabilities
+--> need CAP_SETFCAP (required to use system capabilities)
+(exit man page)
+
+#============
+# Assign permissions
+#============
+setcap
+- read man
+tcpdump -i eth0 ---> You don't have permission to capture on that device (socket: Operation not permitted)
+echo $UID
+sudo -i
+setcap cap_net_raw=eip /usr/sbin/tcpdump
+(eip = effective/inherited/permitted, as seen in man capabilities)
+getcap /usr/sbin/tcpdump ---> will output "/usr/sbin/tcpdump = cap_net_raw+eip"
+logout (or exit)
+tcpdump -i eth0 ---> works!
+
+#====================
+# References
+#====================
+http://www.tcpdump.org/tcpdump_man.html
+https://danielmiessler.com/study/tcpdump
+https://www.youtube.com/watch?v=UwKzLCMkiA8
