@@ -26,6 +26,10 @@ SUPER SPLIT WITH FILENAME (MAIN PROCESS)
 zgrep -H "" LOGFILENAME | grep -Pv 'gz:#' | awk -F'"' '{for(i=2;i<=NF;i++)if(i%2==0)gsub(" ","__SPACE__",$i);}1' OFS="\"" | sed -e 's/ \+/ /g;s/ /,/g;s/__SPACE__/ /g;s/gz:2016/gz,2016/g'
 
 ================
+PASS FILE STRAIGHT INTO COMPRESSED FORM
+myscript.py somefile.pcap | zip myzipfile.zip -
+zgrep "" myzipfile.zip | less
+================
 REPLACE ALL SPACES BETWEEN QUOTES
 awk -F'"' '{for(i=2;i<=NF;i++)if(i%2==0)gsub(" ","__SPACE__",$i);}1' OFS="\"" INPUTFILE.txt
 
