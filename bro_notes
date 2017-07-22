@@ -97,6 +97,83 @@ SHR 	Responder sent a SYN ACK followed by a FIN, we never saw a SYN from the ori
 OTH 	No SYN seen, just midstream traffic (a “partial connection” that was not later closed).
 
 
+Clean install notes for Ubuntu 16.04
+https://www.digitalocean.com/community/tutorials/how-to-install-bro-on-ubuntu-16-04
+
+#=============
+# 1 - install dependencies
+#=============
+sudo apt-get update
+sudo apt-get install bison cmake flex g++ gdb make libmagic-dev libpcap-dev libgeoip-dev libssl-dev python-dev swig2.0 zlib1g-dev
+
+#=============
+# 2 - geodata
+#=============
+wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCityv6-beta/GeoLiteCityv6.dat.gz
+gzip -d GeoLiteCity.dat.gz
+gzip -d GeoLiteCityv6.dat.gz
+### put these files in /usr/share/GeoIP
+sudo mv GeoLiteCity.dat /usr/share/GeoIP/GeoIPCity.dat
+sudo mv GeoLiteCityv6.dat /usr/share/GeoIP/GeoIPCityv6.dat
+
+#=============
+# 3 - install bro from source
+#=============
+git clone --recursive git://git.bro.org/bro
+cd bro
+./configure
+make
+sudo make install
+### installs to /usr/local/bro
+
+#=============
+# 4 - set environment variables and cronjob
+#=============
+sudo nano /etc/profile.d/3rd-party.sh
+-------
+#!/bin/bash
+# Expand PATH to include the path to Bro's binaries
+export PATH=$PATH:/usr/local/bro/bin
+-------
+source /etc/profile.d/3rd-party.sh
+
+### set cronjob to restart bro on crash, copy whole line into file
+sudo nano /etc/cron.d/bro
+*/5 * * * * root /usr/local/bro/bin/broctl cron
+### runs every five mins
+
+#=============
+# 5 - deploy and use (use the full path and clean start/stop using broctl)
+#=============
+sudo /usr/local/bro/bin/broctl deploy
+sudo /usr/local/bro/bin/broctl status
+### sudo /usr/local/bro/bin/broctl stop
+### sudo /usr/local/bro/bin/broctl start
+### logs are recorded to:
+/usr/local/bro/logs/current
+
+#=============
+# 6 - notes and misc
+#=============
+- logs that are stopped will be rolled into a daily folder, with a time-based name and *.log.gz format
+- when logging is started again, new logs will appear in the "current" folder
+
+scripts:
+/usr/local/bro/share/bro/
+site-specific scripts:
+/usr/local/bro/share/bro/site/
+
+#------
+# Invoke on file or roll logs to a folder
+#------
+cd /your/path/logs
+### dump logs to a folder
+### roll every hour, day, etc by script or cronjob
+sudo /usr/local/bro/bin/bro -Ci eth0
+bro -Cr file.pcap
+
+
 #====================
 # future use
 #====================
