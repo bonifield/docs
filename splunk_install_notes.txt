@@ -1,0 +1,66 @@
+Splunk install notes
+
+https://docs.splunk.com/Documentation/Splunk/6.5.2/Installation/RunSplunkasadifferentornon-rootuser
+http://docs.splunk.com/Documentation/SplunkLight/6.5.1612/Installation/InstallonLinux
+
+Debian/Ubuntu:
+
+sudo useradd -m splunk
+sudo groupadd splunk
+sudo passwd splunk [set to whatever you want, or SPLUNK for demoing]
+dpkg -i [splunk installer]
+sudo chown -R splunk:splunk /opt/splunk
+su - splunk [or non-root user]
+/opt/splunk/bin/splunk start
+
+go to assetIP:8000
+default: admin/changeme
+set a new password
+bookmark the link
+
+Forward pfSense logs:
+On Splunk:
+Add Data --> TCP/UDP --> UDP --> 5144, only accept connection from [your source IP]
+Set a new source type, host --> custom --> set host field value, index=main
+Finalize and save
+In pfSense:
+Status --> System Logs --> Settings
+Enable Remote Logging
+Set Remote log servers (aka Splunk and port 5144 or whatever one you set)
+Check "Everything" (or just certain boxes)
+Save
+
+Try a search:
+First time query will show this:
+source="udp:5144" host="pfsense" index="main" sourcetype="firewall"
+
+Extract fields from raw events
+
+
+==========================
+
+
+
+notes:
+REPORT-basicipv4-2
+interface
+match
+action
+direction
+ipversion
+protocol
+transport
+sip
+dip
+sport
+dport
+flags
+REPORT-basicipv4
+REPORT-basicigmp
+
+
+WORKS FOR BASIC IPv4
+sourcetype=firewall transport="tcp" | table _time interface action transport direction sip dip sport dport
+
+FIRST HITS FOR LOCAL ASSETS
+sourcetype=firewall transport="tcp" sip="192.168.1.*" | stats sparkline(count) as hits, earliest(_time) as firstHit, latest(_time) as latestHit, count by sip,dip | eval firstHit=strftime(firstHit, "%x %X") | eval latestHit=strftime(latestHit, "%x %X") | sort -firstHit

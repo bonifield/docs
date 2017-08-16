@@ -1,0 +1,14 @@
+https://serverfault.com/questions/674974/how-to-mount-a-virtualbox-shared-folder
+
+
+On host machine:
+	Make a folder to share
+In VirtualBox:
+	Load the VM
+	Devices --> Shared Folders --> Shared Folder Settings
+	Find the folder you made on your host machine, make it auto-mount and permanent
+In Linux VM:
+	Install Guest Utils
+	Make a folder (~/share) to act as the "other end of the pipe" from the host machine
+	sudo mount -t vboxsf HostMachineShareFolder ~/YourLinuxShareFolder/
+	Reset VM?  Should just work
