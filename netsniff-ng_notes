@@ -1,0 +1,18 @@
+#=============
+# Netsniff-NG
+#=============
+
+-i - inputB
+-o - output
+-s - silent, don't print on screen
+-F - rolling files, ex. 1KiB, 1MiB, 1GiB, 1s, 1sec, 1min, 1hrs
+*** time and filesize CANNOT be combined together ***
+
+Basic capture, use ctrl+c to exit
+netsniff-ng -s -i eth0 -o output.pcap
+
+Time-rolling PCAP
+netsniff-ng -s -i eth0 -F 30sec -o /output/path/
+
+Filesize-rolling PCAP
+netsniff-ng -s -i eth0 -F 20MiB -o /output/path
