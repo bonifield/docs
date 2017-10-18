@@ -7,6 +7,11 @@ sourcetype="pcapstats" | stats sparkline(count) as hits, earliest(_time) as firs
 sourcetype="pcapstats" | stats sparkline(count) as hits, earliest(_time) as firstHit, latest(_time) as latestHit, count by httphost | eval firstHit=strftime(firstHit, "%x %X") | eval latestHit=strftime(latestHit, "%x %X") | fields hits, name, firstHit, latestHit, count | sort -firstHit
 
 #===========================
+# Coalesce and CIDRMatch Timechart Example
+#===========================
+sourcetype=* | eval sippy=coalesce(srcip,sip,src) | where cidrmatch("192.168.1.0/24",sippy) | timechart count by sippy
+
+#===========================
 # One-Shot Upload
 #===========================
 sudo /opt/splunk/bin/splunk add oneshot "/path/to/csv/or/json/file.csv" -sourcetype yoursourcetype -index yourindex -rename-source yoursource -auth SPLUNKTOKENHERE
