@@ -1,7 +1,10 @@
 #===========================
 # First Hits Query - Domain
 #===========================
+sourcetype="pcapstats" | stats count earliest(_time) as firstHit by httphost | eval firstHit=strftime(firstHit, "%x %X") | fields httphost, firstHit, count | sort -firstHit
+sourcetype="pcapstats" | stats count earliest(_time) as firstHit, latest(_time) as latestHit, count by httphost | eval firstHit=strftime(firstHit, "%x %X") | eval latestHit=strftime(latestHit, "%x %X") | fields httphost, firstHit, latestHit, count | sort -firstHit
 sourcetype="pcapstats" | stats sparkline(count) as hits, earliest(_time) as firstHit, latest(_time) as latestHit, count by httphost | eval firstHit=strftime(firstHit, "%x %X") | eval latestHit=strftime(latestHit, "%x %X") | sort -firstHit
+sourcetype="pcapstats" | stats sparkline(count) as hits, earliest(_time) as firstHit, latest(_time) as latestHit, count by httphost | eval firstHit=strftime(firstHit, "%x %X") | eval latestHit=strftime(latestHit, "%x %X") | fields hits, name, firstHit, latestHit, count | sort -firstHit
 
 #===========================
 # One-Shot Upload
