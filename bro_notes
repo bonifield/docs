@@ -130,13 +130,15 @@ sudo make install
 #=============
 # 4 - set environment variables and cronjob
 #=============
-sudo nano /etc/profile.d/3rd-party.sh
+sudo nano /etc/profile.d/bropath.sh
 -------
 #!/bin/bash
 # Expand PATH to include the path to Bro's binaries
 export PATH=$PATH:/usr/local/bro/bin
 -------
-source /etc/profile.d/3rd-party.sh
+source /etc/profile.d/bropath.sh
+# note /usr/local/bro/bin - from git clone install
+# note /opt/bro/bin - from binary package
 
 ### set cronjob to restart bro on crash, copy whole line into file
 sudo nano /etc/cron.d/bro
@@ -173,6 +175,16 @@ cd /your/path/logs
 sudo /usr/local/bro/bin/bro -Ci eth0
 bro -Cr file.pcap
 
+# broctl notes
+/usr/local/bro/etc
+broctl.cfg - main config file for bro control; set mail alerts, log rotation and location, other options
+# default for LogRotationInterval is 3600 seconds, or 1 hour
+# 1 day = 86400 seconds
+networks.cfg - set your local network ip space (192, 10, etc)
+node.cfg - interface and worker settings, for a standalone just set the interface and save
+# set your listening interface in node.cfg
+# if interface is not set (ie. eth0 is default, but you are in a vm and only have enp0s3),
+# bro will not start and will crash out (won't wreck anything though)
 
 #====================
 # future use
