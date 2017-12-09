@@ -18,6 +18,19 @@ default: admin/changeme
 set a new password
 bookmark the link
 
+
+
+
+
+
+
+
+
+
+
+
+
+======= extra pfSense stuff
 Forward pfSense logs:
 On Splunk:
 Add Data --> TCP/UDP --> UDP --> 5144, only accept connection from [your source IP]
