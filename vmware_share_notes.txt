@@ -1,0 +1,17 @@
+On host machine:
+	Make a folder to share
+In VMware Workstation console:
+	VM --> Settings --> Options (tab) --> Shared Folder
+	Select "Always enabled", then "Add..." and find the folder you made previously
+On host machine:
+	Open the folder you made to share
+In the VM:
+	Load the VM
+	ls /mnt/hgfs/[shareFolderName]
+	touch /mnt/hgfs/[shareFolderName]/test.txt
+	verify the file was created on the host machine
+	rm /mnt/hgfs/[shareFolderName]/test.txt
+	cd
+	ln -s /mnt/hgfs/[shareFolderName]/ share
+		* there is a space after the shared folder and "share"
+		* this makes a symlink at ~/share/ for easy access
