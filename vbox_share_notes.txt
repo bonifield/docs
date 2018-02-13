@@ -10,5 +10,10 @@ In VirtualBox:
 In Linux VM:
 	Install Guest Utils
 	Make a folder (~/share) to act as the "other end of the pipe" from the host machine
+	Log out then back in again
 	sudo mount -t vboxsf HostMachineShareFolder ~/YourLinuxShareFolder/
-	Reset VM?  Should just work
+		ex. "sudo mount -t vboxsf WinShare ~/LinuxShare"
+Troubleshooting:
+	- Reset VM
+	- cd /opt/VBoxGuestAdditions-*/init/ && sudo ./vboxadd setup
+	
