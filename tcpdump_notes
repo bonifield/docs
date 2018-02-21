@@ -1,4 +1,75 @@
 #====================
+# Basic Usage
+#====================
+
+# BASIC CAPTURE
+tcpdump -s 0 -nn -i eth0 -w file.pcap
+	-s 0 = capture whole packet, instead of first 96 bytes
+	-nn = don't try to resolve hostnames or ports
+	-i eth0 = capture on eth0
+	-w file.pcap = specify output file
+	USE CTRL+C TO END CAPTURE
+
+# BASIC CAPTURE ONLY FROM SPECIFIC IP
+tcpdump -s 0 -nn -i eth0 'host 192.168.1.1' -w file.pcap
+	-s 0 = capture whole packet, instead of first 96 bytes
+	-nn = don't try to resolve hostnames or ports
+	-i eth0 = capture on eth0
+	-w file.pcap = specify output file
+	'host 192.168.1.1' = only capture from that IP
+	USE CTRL+C TO END CAPTURE
+
+# BASIC CAPTURE ONLY FROM SPECIFIC CIDR
+tcpdump -s 0 -nn -i eth0 'net 192.168.1.0/24' -w file.pcap
+	-s 0 = capture whole packet, instead of first 96 bytes
+	-nn = don't try to resolve hostnames or ports
+	-i eth0 = capture on eth0
+	-w file.pcap = specify output file
+	net 192.168.1.0/24' = only capture from that CIDR
+	USE CTRL+C TO END CAPTURE
+
+# CAPTURE AND ROTATE PCAPS EVERY 1 MB
+tcpdump -nn -i eth0 -s 0 -C 1 -W 5 -w file.pcap
+	-C 1 = rotate files every 1 MB / files will have the same name specified with -w, appending an incrementing number as each file is generated
+	-W 5 = limit to 5 rotating files, filenames will have proper leading 0s to allow for sorting
+	USE CTRL+C TO END CAPTURE
+
+# CAPTURE AND ROTATE EVERY 3 MINUTES
+tcpdump -nn -i eth0 -s 0 -G 180 -W 5 -w file.pcap
+	-G 180 = rotate every 180 seconds, filenames won't use the time-appended name format
+	USE CTRL+C TO END CAPTURE
+
+# BASIC ASCII OUTPUT FROM FILE
+tcpdump -nnAr file.pcap
+	-nn = don't try to resolve hostnames or ports
+	-A = ASCII output
+	-r file.pcap = read from this capture file
+
+# BASIC HEXDUMP OUTPUT FROM FILE
+tcpdump -nnXr file.pcap
+	-nn = don't try to resolve hostnames or ports
+	-A = ASCII output
+	-r file.pcap = read from this capture file
+	* note that there can't be anything between the "-r" and the filename
+
+# QUIET / SIMPLE OUTPUT, ALSO SEE SINGLE IP OF INTEREST
+tcpdump -nnttttq 'host 192.168.1.1' -r file.pcap
+	-q = "quiet" / less-noisy output
+	-tttt = show both date and time columns, and show them in human readable format
+	'host 192.168.1.1' = only show results from that IP (use "net xxxx" for a CIDR)
+	* note that there can't be anything between the "-r" and the filename
+
+# SEE ALL HTTP HEADERS
+tcpdump -nnAr file.pcap | grep -Po "(GET .*|POST .*|PUT .*|HEAD .*|OPTIONS .*|DELETE .*|TRACE .*|CONNECT .*|HTTP\/[1-2]{1}.*)|^[A-Za-z0-9-]+: .*" | sed -r 's/(GET .*|POST .*|PUT .*|HEAD .*|OPTIONS .*|DELETE .*|TRACE .*|CONNECT .*|HTTP\/[1-2]{1}.*)/\n\1/g'
+
+# SEE ONLY HTTP REQUEST HEADERS
+tcpdump -nnAr file.pcap | grep -Po "(GET .*|POST .*|PUT .*|HEAD .*|OPTIONS .*|DELETE .*|TRACE .*|CONNECT .*)|^[A-Za-z0-9-]+: .*" | sed -r 's/(GET .*|POST .*|PUT .*|HEAD .*|OPTIONS .*|DELETE .*|TRACE .*|CONNECT .*)/\n\1/g'
+
+# SEE ONLY HTTP RESPONSE HEADERS
+tcpdump -nnAr file.pcap | grep -Po "(HTTP\/[1-2]{1}.*)|^[A-Za-z0-9-]+: .*" | sed -r 's/(HTTP\/[1-2]{1}.*)/\n\1/g'
+
+
+#====================
 # TCPDump - Basic Details
 #====================
 
