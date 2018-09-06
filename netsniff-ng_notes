@@ -2,7 +2,7 @@
 # Netsniff-NG
 #=============
 
--i - inputB
+-i - input
 -o - output
 -s - silent, don't print on screen
 -F - rolling files, ex. 1KiB, 1MiB, 1GiB, 1s, 1sec, 1min, 1hrs
