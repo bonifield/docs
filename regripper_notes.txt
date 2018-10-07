@@ -1,0 +1,48 @@
+#=============
+# RegRipper Notes for Linux
+#=============
+
+
+sudo apt install cpanminus -y
+
+
+# download the zip or git clone from the most recent RegRipper GitHub repository by keydet89
+# unzip and move to your desired path
+https://github.com/keydet89/RegRipper2.8
+unzip RegRipper2.8-master.zip
+mv RegRipper2.8-master /your/desired/path
+cd RegRipper2.8-master
+chmod +x rip.pl
+
+
+# download the most recent Perl module linked on the side of https://metacpan.org/pod/Parse::Win32Registry
+wget https://cpan.metacpan.org/authors/id/J/JM/JMACFARLA/Parse-Win32Registry-1.0.tar.gz
+tar -xzf Parse-Win32Registry-1.0.tar.gz
+cd Parse-Win32Registry-1.0
+perl Makefile.PL
+make
+sudo make install
+# FOLLOW THIS PROCESS IF THERE ARE ANY PERL MODULE ERRORS (it may be *very* tedious)
+
+
+# change the interpreter in the first lines of rip.pl and rr.pl
+which perl
+# edit the files
+# change the first line in each file from c:... to the following (yes, include the hashbang [#!]):
+#! /usr/bin/perl
+
+
+# edit rip.pl to know where plugins are
+# change the line
+my $plugindir = File::Spec->catfile("plugins");
+# to 
+my $plugindir = File::Spec->catfile("/your/path/to/regripper/plugins");
+
+
+# add to the path
+export PATH=$PATH:/your/path/to/regripper
+
+
+# usage
+rip.pl -r [registry-hive] -p [module-name]
+rip.pl -r NTUSER.DAT -p recentdocs

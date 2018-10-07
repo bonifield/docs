@@ -1,0 +1,257 @@
+#=============
+# evtxdump.pl install and troubleshooting
+#
+# Disclaimer - Perl is not my thing.  I know enough about it to be dangerous, but I generally avoid it whenever I can.
+#=============
+
+
+# get the most recent version of the toolsuite
+wget http://computer.forensikblog.de/files/evtx/EvtxParser-current.zip
+unzip EvtxParser-current.zip
+cd EvtxParser-current
+perl Makefile.PL
+make
+sudo make install
+
+
+#=============
+# If everything above this line worked, great!  Now you can use evtxdump.pl and the other tools.
+# If things did NOT go as planned, prepare to get really good at downloading modules from metacpan.
+# ...If anyone knows a better way to do this, scripting aside because I already made one for my own use, please let me know.
+#
+# pro tip to save a little time:  sudo apt-get install cpanminus -y
+#=============
+
+
+...
+evtxdump.pl [somewindowslog.evtx]
+# errors out - Can't locate Carp/Assert.pm in @INC
+# download the zip from https://github.com/schwern/Carp-Assert
+unzip Carp-Assert-master.zip
+cd Carp-Assert-master
+perl Makefile.PL
+make
+sudo make install
+
+...
+evtxdump.pl [somewindowslog.evtx]
+# errors out - Can't locate DateTime.pm in @INC
+# download the zip from https://github.com/houseabsolute/DateTime.pm
+unzip DateTime.pm-master.zip
+cd DateTime.pm-master
+perl Makefile.PL
+make
+sudo make install
+
+...
+evtxdump.pl [somewindowslog.evtx]
+# errors out - Can't locate namespace/autoclean.pm in @INC
+wget https://cpan.metacpan.org/authors/id/E/ET/ETHER/namespace-autoclean-0.28.tar.gz
+tar -xvzf namespace-autoclean-0.28.tar.gz
+cd namespace-autoclean-0.28
+perl Makefile.PL
+make
+sudo make install
+
+
+...
+# errors out - Can't locate B/Hooks/EndOfScope.pm in @INC
+wget https://cpan.metacpan.org/authors/id/E/ET/ETHER/B-Hooks-EndOfScope-0.24.tar.gz
+tar -xvzf B-Hooks-EndOfScope-0.24.tar.gz
+cd B-Hooks-EndOfScope-0.24
+perl Makefile.PL
+make
+sudo make install
+
+...
+# errors out - Can't locate Module/Implementation.pm in @INC
+# also shows errors:
+# Warning: prerequisite Module::Implementation 0.05 not found.
+# Warning: prerequisite Sub::Exporter::Progressive 0.001006 not found.
+# Warning: prerequisite Variable::Magic 0.48 not found.
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/Module-Implementation-0.09.tar.gz && \
+wget https://cpan.metacpan.org/authors/id/F/FR/FREW/Sub-Exporter-Progressive-0.001013.tar.gz && \
+wget https://cpan.metacpan.org/authors/id/V/VP/VPIT/Variable-Magic-0.62.tar.gz
+tar -xvzf Module-Implementation-0.09.tar.gz && \
+tar -xvzf Sub-Exporter-Progressive-0.001013.tar.gz && \
+tar -xvzf Variable-Magic-0.62.tar.gz
+cd Module-Implementation-0.09
+perl Makefile.PL && \
+make && \
+sudo make install
+cd ../Sub-Exporter-Progressive-0.001013
+perl Makefile.PL && \
+make && \
+sudo make install
+cd ../Variable-Magic-0.62
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# errors out - Can't locate Module/Runtime.pm in @INC
+wget https://cpan.metacpan.org/authors/id/Z/ZE/ZEFRAM/Module-Runtime-0.016.tar.gz
+tar -xvzf Module-Runtime-0.016.tar.gz
+cd Module-Runtime-0.016
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# errors out - Can't locate Try/Tiny.pm in @INC
+wget https://cpan.metacpan.org/authors/id/E/ET/ETHER/Try-Tiny-0.30.tar.gz && \
+tar -xvzf Try-Tiny-0.30.tar.gz && \
+cd Try-Tiny-0.30 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# errors out - Can't locate namespace/clean.pm in @INC
+wget https://cpan.metacpan.org/authors/id/R/RI/RIBASUSHI/namespace-clean-0.27.tar.gz
+tar -xvzf https://cpan.metacpan.org/authors/id/R/RI/RIBASUSHI/namespace-clean-0.27.tar.gz
+cd namespace-clean-0.27
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# errors out - Can't locate Package/Stash.pm in @INC
+sudo apt-get install cpanminus -y
+
+...
+# errors out - Can't locate Specio/Exporter.pm in @INC (you may need to install the Specio::Exporter module)
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/Specio-0.42.tar.gz
+tar -xvzf Specio-0.42.tar.gz
+cd Specio-0.42
+# Warning: prerequisite Devel::StackTrace 0 not found.
+# Warning: prerequisite Eval::Closure 0 not found.
+# Warning: prerequisite Test::Fatal 0 not found.
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/Devel-StackTrace-2.03.tar.gz && \
+wget https://cpan.metacpan.org/authors/id/D/DO/DOY/Eval-Closure-0.14.tar.gz && \
+wget https://cpan.metacpan.org/authors/id/R/RJ/RJBS/Test-Fatal-0.014.tar.gz
+for i in `ls`; do tar -xvzf $i; done
+cd Dev[tab]
+perl Makefile.PL && \
+make && \
+sudo make install
+cd ../E[tab]
+perl Makefile.PL && \
+make && \
+sudo make install
+cd ../T[tab]
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# errors out - Can't locate Params/ValidationCompiler.pm in @INC (you may need to install the Params::ValidationCompiler module)
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/Params-ValidationCompiler-0.30.tar.gz
+tar -xvzf Params-ValidationCompiler-0.30.tar.gz
+cd Params-ValidationCompiler-0.30
+perl Makefile.PL && \
+make && \
+sudo make install
+# Warning: prerequisite Exception::Class 0 not found.
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/Exception-Class-1.44.tar.gz
+tar -xvzf Exception-Class-1.44.tar.gz
+cd Exception-Class-1.44
+perl Makefile.PL && \
+make && \
+sudo make install
+# Warning: prerequisite Class::Data::Inheritable 0.02 not found.
+wget https://cpan.metacpan.org/authors/id/T/TM/TMTM/Class-Data-Inheritable-0.08.tar.gz
+tar -xvzf Class-Data-Inheritable-0.08.tar.gz
+cd Class-Data-Inheritable-0.08
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# Can't locate DateTime/Locale.pm in @INC (you may need to install the DateTime::Locale module)
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/DateTime-Locale-1.22.tar.gz
+tar -xvzf DateTime-Locale-1.22.tar.gz
+cd DateTime-Locale-1.22
+perl Makefile.PL && \
+make && \
+sudo make install
+# errors on Makefile.PL - Can't locate File/ShareDir/Install.pm in @INC (you may need to install the File::ShareDir::Install module)
+wget https://cpan.metacpan.org/authors/id/E/ET/ETHER/File-ShareDir-Install-0.13.tar.gz
+tar -xvzf File-ShareDir-Install-0.13.tar.gz
+cd File-ShareDir-Install-0.13
+perl Makefile.PL && \
+make && \
+sudo make install
+# Warning: prerequisite Dist::CheckConflicts 0.02 not found.
+# Warning: prerequisite File::ShareDir 0 not found.
+# Warning: prerequisite List::Util 1.45 not found. We have 1.41.
+
+wget https://cpan.metacpan.org/authors/id/R/RE/REHSACK/File-ShareDir-1.116.tar.gz && \
+wget https://cpan.metacpan.org/authors/id/P/PE/PEVANS/Scalar-List-Utils-1.50.tar.gz && \
+wget https://cpan.metacpan.org/authors/id/D/DO/DOY/Dist-CheckConflicts-0.11.tar.gz
+tar -xzf File-ShareDir-1.116.tar.gz && \
+tar -xzf Scalar-List-Utils-1.50.tar.gz && \
+tar -xzf Dist-CheckConflicts-0.11.tar.gz && \
+cd File-ShareDir-1.116 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+cd ../Sca[tab]
+perl Makefile.PL && \
+make && \
+sudo make install
+cd ../Dist[tab]
+perl Makefile.PL && \
+make && \
+sudo make install
+
+# Warning: prerequisite Class::Inspector 1.12 not found.
+...
+# Can't locate Class/Inspector.pm in @INC (you may need to install the Class::Inspector module)
+wget https://cpan.metacpan.org/authors/id/P/PL/PLICEASE/Class-Inspector-1.32.tar.gz && \
+tar -xzf Class-Inspector-1.32.tar.gz && \
+cd Class-Inspector-1.32 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# Can't locate DateTime/TimeZone.pm in @INC (you may need to install the DateTime::TimeZone module)
+wget https://cpan.metacpan.org/authors/id/D/DR/DROLSKY/DateTime-TimeZone-2.19.tar.gz && \
+tar -xzf DateTime-TimeZone-2.19.tar.gz && \
+cd DateTime-TimeZone-2.19 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# Can't locate Class/Singleton.pm in @INC (you may need to install the Class::Singleton module)
+wget https://cpan.metacpan.org/authors/id/S/SH/SHAY/Class-Singleton-1.5.tar.gz && \
+tar -xzf Class-Singleton-1.5.tar.gz && \
+cd Class-Singleton-1.5 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+
+...
+# Can't locate Digest/CRC.pm in @INC (you may need to install the Digest::CRC module)
+wget https://cpan.metacpan.org/authors/id/O/OL/OLIMAUL/Digest-CRC-0.22.2.tar.gz && \
+tar -xzf Digest-CRC-0.22.2.tar.gz && \
+cd Digest-CRC-0.22 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+
+
+...
+# Can't locate Data/Hexify.pm in @INC (you may need to install the Data::Hexify module)
+wget https://cpan.metacpan.org/authors/id/J/JV/JV/Data-Hexify-1.00.tar.gz && \
+tar -xzf Data-Hexify-1.00.tar.gz && \
+cd Data-Hexify-1.00 && \
+perl Makefile.PL && \
+make && \
+sudo make install
+
+#=============
+# IT WORKS NOW
+#=============
