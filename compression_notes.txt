@@ -1,0 +1,128 @@
+#=============
+# tar
+#=============
+
+tar [options] [destination/tar_file_name] [files-to-archive]
+	Commands (order of most commonly used):
+		-c, --create - create an archive
+		-x, --extract - extract files from archive
+		-t, --list - list archive contents
+		-A, --concatenate - appends tar files to an archive
+		-r, --append - appends non-tar files to an archive
+		-u, --update - appends files that are newer than those in archive
+		-d, --diff or --compare - compare archives to files on disk
+	Qualifiers (order of most commonly used):
+		-f [file], --file [host:]file - uses the file (optionally on the computer called host) as the archive file
+		-z, --gzip or --ungzip - compresses an archive wwith gzip
+		-v, --verbose - lists all files read or extracted; when used with -t/--list, displays file sizes, ownership, and timestamps
+		-C [dir], --directory [dir] - change to directory before performing operations
+		-g [file], --listed-incremental [file] - performs an incremental backup or restore using [file] as a list of previously archived files
+		-p, --preserve-permissions - preserve all protection information
+		-j, --bzip2 (older -I or -y) - compresses an archive with bzip2
+		-J, --xz - compresses an archive with xz
+		-M, --multi-volume - creates or extracs a multi-volume archive
+		-W, --verify  - verifies the archive after writing it
+tar -cvzf new.tar.gz /some/dir/ - gzip compress all files in /some/dir into new file new.tar.gz, be verbose
+tar -cvzf new.tar.gz file*
+tar -xvzf file.tar.gz - extract gzipped tarball named file.tar.gz, be verbose
+tar -xvzf file.tar.gz -C /output/directory
+tar -tf file.tar.gz - list contents of tarball
+
+#=============
+# gzip
+#=============
+gzip [options] [file-to-zip]
+	Commands
+		-c, --stdout      write on standard output, keep original files unchanged
+		-d, --decompress  decompress
+		-f, --force       force overwrite of output file and compress links
+		-k, --keep        keep (don't delete) input files
+		-l, --list        list compressed file contents
+		-q, --quiet       suppress all warnings
+		-r, --recursive   operate recursively on directories
+		-S, --suffix=SUF  use suffix SUF on compressed files
+		-t, --test        test compressed file integrity
+		-1, --fast        compress faster
+		-9, --best        compress better
+		With no FILE, or when FILE is -, read standard input.
+gzip [input-file] - gzips a file
+gzip -d [input-file] - un-gzips file
+gzip -fk9 - force overwrite of existing gzip, keep original, use the best compression
+docker save [container] | gzip > container.tar.gz - read from stdout and pass to a gz
+
+#=============
+# zip / unzip
+#=============
+zip [options] [-b path] [-t mmddyyyy] [-n suffixes] [zipfile list] [-xi list]
+	The default action is to add or replace zipfile entries from list, which can include the special name - to compress standard input.
+	If zipfile and list are omitted, zip compresses stdin to stdout.
+		-f - freshen: only changed files
+		-u - update: only changed or new files
+		-d - delete entries in zipfile
+		-m - move into zipfile (delete original files)
+		-r - recurse into directories
+		-j - junk (don't record) directory names
+		-0 - store only
+		-l - convert LF to CR LF (-ll CR LF to LF)
+		-1 - compress faster
+		-9 - compress better
+		-q - quiet operation
+		-v - verbose operation/print version info
+		-c - add one-line comments
+		-z - add zipfile comment
+		-@ - read names from stdin
+		-o - make zipfile as old as latest entry
+		-x - exclude the following names
+		-i - include only the following names
+		-F - fix zipfile (-FF try harder)
+		-D - do not add directory entries
+		-A - adjust self-extracting exe
+		-J - junk zipfile prefix (unzipsfx)
+		-T - test zipfile integrity
+		-X - eXclude eXtra file attributes
+		-y - store symbolic links as the link instead of the referenced file
+		-e - encrypt
+		-n - don't compress these suffixes
+zip myarchive.zip file*
+zip myarchive.zip file1 file2
+zip -r output.zip /some/folder - compresses a folder structure into a zip
+zip -d myarchive.zip file-to-delete.jpg
+unzip myarchive.zip
+
+#=============
+# cpio
+#=============
+cpio - like tar but different options, three modes - Copy-Out, Copy-In, Copy-Pass
+***think of the directory, not the archive, when considering mode naming***
+must pass a list of files to the program; use < to pass a filename list to program, or pipe output of find command to cpio -o > /some/dir/compressed.cpio
+must pipe archive to gzip to compress the file
+Copy-Out activated with -o / --create - create archive and copy files into it
+Copy-In activated with -i / --extract - extract data from existing archive
+Copy-Pass activated with -p / --pass-through - combiens copy-out and copy-in modes, meaning an entire directory tree can be copied from one location to another
+	Options:
+		-a, --reset-access-time - reset access time after reading file so it doesn't appear to have been read
+		-A, --append - append data to existing archive
+		-E [filename], --pattern-file=filename - use contents of filename as a list of files to be extracted in copy-in mode
+		-f [filename], --file=filename - use filename as cpio archive file; if omitted cpio will use stdin or stdout
+		-H [format], --format=format - use specifed format for the archive file; common vals are bin (default old binary), crc (newer binary with checksum), tar (tar format)
+		-I [filename] - use filename specified instead of stdin (unlike -F, this does not redirect output data)
+		--no-absolute-file-names - copy-in mode, extract files relative to the current directory, even if filenames in the archive contain full directory paths
+		-O [filename] - uses filename specified instead of stdout (unlike -F, this does not redirect output data)
+		-t, --list - display table of contents for input
+		-u, --unconditional - replace all files without first asking for verification
+		-v, --verbose - display filenames as they're added to or extracted from the archive; when used with -t, displays additional listing information (like ls -l)
+	Make archive:
+		find ./myfolder | cpio -o > /media/usb/myfolderbackup.cpio
+	Make compressed archive:
+		find ./myfolder | cpio -o | gzip > /media/usb/myfolderbackup.cpio.gz
+	Extract compressed archive:
+		gunzip /media/usb/myfolderbackup.cpio.gz
+		cpio -i < /media/usb/myfolderbackup.cpio
+		or
+		gunzip -c /media/usb/myfolderbackup.cpio.gz | cpio -i
+			- extracts contents in one step
+	Make a compressed cpio:
+		find ./fil* | cpio -o | gzip > myfiles.cpio.gz
+	Extract to dest folder:
+		(cd ~/output/ && gunzip -c ~/myfiles.cpio.gz | cpio -o)
+		*** wrapping in parentheses will preserve the script or user's present working directory ***
