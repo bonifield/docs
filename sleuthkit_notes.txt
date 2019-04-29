@@ -1,0 +1,103 @@
+#=============
+# Sleuthkit Notes
+# Last Updated - April 2019
+#=============
+
+
+# awesome wiki and manpages
+https://wiki.sleuthkit.org/index.php?title=TSK_Tool_Overview
+
+# tool prefixes
+fs - file system / ff - file name / i - metadata, file contents / blk - data units (blocks) / j - journal / mm - volumes (ex. disks) / img_ - images / disk_ - disk
+
+# tool suffixes
+stat - show details and statistics / ls - list details / find - find specific data / cat - contents of a structure or file
+*note that blkls will display data on stdout
+
+# metadata addresses
+ex. 12345-128-1
+	inode - attribute - unique ID
+
+# select, simplified tool usage order for demos
+
+
+#=============
+
+
+mmls [-t [vstype]] [img]
+	- output columns:  TSK assigned partition ID, slot, start sector, end sector, length in sectors, description
+	- dumps partition table, get partition offsets for use with fsstat
+	-t list - shows supported volume types, if mmls doesn't immediately identify filetype
+
+
+fsstat -o [sectoroffset] [img]
+	- shows info about a specific file systems, including inode ranges, attributes, sector/cluster size, build info
+	-o - offset is sectors, NOT bytes
+
+
+fls -plr -o [sectoroffset] [img]
+	- list allocated and unallocated files in a directory
+	- long output columns:  filetype, metadata address, name, mtime (last modified), atime (last accessed), ctime (last changed), crtime (created), size (bytes), uid, gid
+	- can sometimes ommit -o with USBs
+	-p - include full path with filenames
+	-l - long display
+	-r - recurse folder structure (get all from root path)
+	-f list - list supported file system types
+	-m - output in body format (for timelines)
+	-d - only show deleted files
+
+
+ifind -o [sectoroffset] -n "full/path/to/search/and/filename" [img]
+	- returns inode for given search
+	-n - finds metadata given a filename
+	-a - find all inodes
+	-d [unit_addr] - find metadata given a data unit
+	-f [fstype] - specify file system type
+	-p [par_addr] - find unallocated MFT entries given parent's meta address (NTFS only)
+
+
+istat -o [sectoroffset] [img] [inode]
+	- details about a specific metadata structure (inode)
+	- gets attributes based on MFT number
+	- resident - stored directly in MFT; non-resident - stored elsewhere, shows block locations
+	- $DATA attribute size is the CURRENT size; any subsequent data in the allocated space is the rest of any potentially deleted content
+	-f [fstype], -i [imgtype]
+	-z [timezone] - show times in specified timezone
+	-s [seconds] - time skew of original machine
+
+
+icat -o [sectoroffset] [img] [inode] > [inode].icat
+	- extract contents of a file (defaults to $DATA attribute); redirect output recommended
+	-h - do not resolve holes in sparse files
+	-r - recover deleted file
+	-R - same as -r but suppress recovery errors
+	-f [fstype], -i [imgtype]
+	-s - display slack space at end of file
+	- use full inode-attribute-unique address to extract other attributes, ex. if there are multiple $DATA attributes
+
+
+#=============
+
+
+# find deleted file if no inodes in fls
+	# parse deleted files
+		fls -plrd -o [sectoroffset] [img] > fls-deleted.txt
+	# find the inode
+		ifind -o [sectoroffset] -n "full/path/to/file" [img]
+	# get stats to check for $DATA attribute
+		istat -o [sectoroffset] [img] [inode]
+	# extract $DATA attribute via icat
+		icat -o [sectoroffset] [img] [inode] > [inode].icat
+
+
+# find fragments of a partially-overwritten file - requires 4 pieces of info
+	# get cluster size of partition, location of first cluster, size of MFT entries
+		fsstat -o [sectoroffset] [img] | grep -P "Cluster|MFT"
+	# use that information and inode number to calculate partition offset
+		(first cluster * cluster size) + (MFT entry size * inode)
+		# result is the partition offset
+	# read from that offset for [MFT entry size] bytes (ex. 1024) to recover the entry
+		dd if=your_image.dd of=output_file bs=1 count=1024 skip=[partition_offset]
+	# open output file in hex editor
+# OR
+	use a hex editor to go to the calculated offset without using dd to make a new file
