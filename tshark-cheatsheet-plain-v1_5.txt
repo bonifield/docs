@@ -1,0 +1,90 @@
+# Tshark Cheat Sheet v1.5
+# Released:  17 Aug 2016 // JB
+# Last Updated:  25 Feb 2020 // JB
+
+Key Points:
+- " -t ad " will show absolute time.  Default is "-t r", time relative to start of file.
+- " -T fields " must precede the usage of " -e " when displaying columns, and must include "-R" or "-Y" (depending on version)
+- a Display Filter is what you want to see, i.e. " -R 'http && ip.src=1.2.3.4' "
+
+# View Number of Available Streams
+# stream index starts at zero
+tshark -r INPUTFILE -T fields -e tcp.stream | sort -nu
+
+# Follow a TCP stream
+tshark -r INPUTFILE -qz follow,tcp,ascii,STREAMNUMBER
+
+# Follow TCP streams where IP1:Port1 talk to IP2:Port2
+tshark -r INPUTFILE -qz follow,tcp,ascii,IP1:PORT1,IP2:PORT2
+
+# View Frame Summaries
+tshark -r INPUTFILE -nSR DISPLAYFILTER
+
+# View Verbose Frame Information
+tshark -r INPUTFILE -nVR DISPLAYFILTER
+
+# Decode As
+tshark -r INPUTFILE -d layerType==specifiedValue,desiredProtocol
+# example will decode TCP 8888 traffic as http
+# -d tcp.port==8888,http
+
+# Display Column Data in Desired Format
+# -e can be used once or many times
+# COLUMN can be any display filter, such as http.host, ip.src, etc
+tshark -r INPUTFILE -T fields -e COLUMN -e COLUMN -R DISPLAYFILTER
+
+# View Packet Bytes
+# -O is the filter that invokes Bytes view and is a comma-separated list of services to view
+tshark -r INPUTFILE -O dns,http
+
+# Export Specific Information to File
+# using -F with no arguments will print a list of options
+tshark -r INPUTFILE -R DISPLAYFILTER -w OUTPUTFILE -F FORMAT
+
+# Statistics Usage
+tshark -r INPUTFILE -qz http,stat, (the last comma needs to be there)
+tshark -r INPUTFILE -qz http,tree
+tshark -r INPUTFILE -qz http_req,tree
+tshark -r INPUTFILE -qz http_srv,tree
+tshark -r INPUTFILE -qz conv,tcp,[filter] (can omit filter / displays conversations in a file by transport/filter)
+tshark -r INPUTFILE -qz expert,[error/warn/note/chat][filter] (can omit bracketed items to display all expert warning levels)
+tshark -r INPUTFILE -qz io,phs,[filter] (can omit filter / protocol hierarchy, i.e. " io,phs " or " io,phs,tcp.stream==1 ")
+
+# Examples
+# show stream 2 of a PCAP file
+tshark -r Bad.pcap -qz follow,tcp,ascii,2
+# prints specified columns
+tshark -r Bad.pcap -T fields -e tcp.stream -e http.request.method -e http.host -R http.request
+# copies all DNS to a new PCAP file
+tshark -r Bad.pcap -R dns -w BadDNS.pcap -F pcapng
+
+# Example Display Filters
+# note that 'referrer' is supposed to only have one r due to a misspelling in the RFC
+# Use " && ", " || ", " == ", and/or "(filter) contains x" to form your arguments
+
+http
+http.request
+http.response
+http.host
+tcp.port
+tcp.srcport
+tcp.dstport
+udp.port
+udp.srcport
+udp.dstport
+http.user_agent
+http.request.method
+http.response.code
+dns
+ip.src
+ip.dst
+http.referer
+http.request.uri
+http.response.phrase
+rdp
+tcp.flags.syn
+http.content_type
+http.request.full_uri
+ftp-data
+tcp.srcport
+ssl.handshake.extensions_server_name
