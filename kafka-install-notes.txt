@@ -145,7 +145,7 @@ sudo /home/kafka/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhos
 
 
 #=============
-# TEST BEATS
+# TEST USING BEATS (PRODUCERS) AND LOGSTASH (CONSUMER)
 #=============
 cd ~/Downloads
 wget https://artifacts.elastic.co/downloads/logstash/logstash-7.10.2-amd64.deb
@@ -180,6 +180,7 @@ output.kafka:
   topic: "filebeat"
 #######
 
+#sudo systemctl enable filebeat # only enable if start-on-boot is desired
 sudo systemctl start filebeat
 sudo systemctl status filebeat
 # in another terminal
@@ -199,6 +200,7 @@ output.kafka:
   topic: "packetbeat"
 #######
 
+#sudo systemctl enable packetbeat # only enable if start-on-boot is desired
 sudo systemctl start packetbeat
 sudo systemctl status packetbeat
 # in another terminal
@@ -228,9 +230,13 @@ output {
 #######
 
 # test the config
-sudo /usr/share/logstash/bin/logstash --config.test_and_exit -f /etc/logstash/conf.d/
+sudo /usr/share/logstash/bin/logstash -f /etc/logstash/conf.d/ --config.test_and_exit
 # run Logstash; will print events to stdout
 sudo /usr/share/logstash/bin/logstash -f /etc/logstash/conf.d/ --config.reload.automatic
 # in another terminal
 sudo tail -f /var/log/logstash/logstash-test.log | jq '.'
 
+# sudo /usr/share/logstash/bin/system-install # only enable if start-on-boot is desired
+# sudo systemctl enable logstash # only enable if start-on-boot is desired
+# sudo systemctl start logstash
+# sudo systemctl status logstash
