@@ -119,7 +119,7 @@ kafkat partitions
 #=============
 # STEP 7 - OPTIONAL - SETTING UP A MULTI-NODE CLUSTER
 #=============
-If you want to create a multi-broker cluster using more Ubuntu 18.04 machines, you should repeat Step 1, Step 4, and Step 5 on each of the new machines. Additionally, you should make the following changes in the server.properties file for each:
+If you want to create a multi-broker cluster using more CentOS 7 machines, you should repeat Step 1, Step 4, and Step 5 on each of the new machines. Additionally, you should make the following changes in the server.properties file for each:
 	- The value of the broker.id property should be changed such that it is unique throughout the cluster. This property uniquely identifies each server in the cluster and can have any string as its value. For example, "server1", "server2", etc.
 	- The value of the zookeeper.connect property should be changed such that all nodes point to the same ZooKeeper instance. This property specifies the Zookeeper instance’s address and follows the <HOSTNAME/IP_ADDRESS>:<PORT> format. For example, "203.0.113.0:2181", "203.0.113.1:2181" etc.
 If you want to have multiple ZooKeeper instances for your cluster, the value of the zookeeper.connect property on each node should be an identical, comma-separated string listing the IP addresses and port numbers of all the ZooKeeper instances.
