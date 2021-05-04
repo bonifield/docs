@@ -52,7 +52,7 @@ After=network.target remote-fs.target
 [Service]
 Type=simple
 User=kafka
-ExecStart=/home/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties
+ExecStart=/bin/sh -c '/home/kafka/kafka/bin/zookeeper-server-start.sh /home/kafka/kafka/config/zookeeper.properties > /home/kafka/kafka/zookeeper.log 2>&1'
 ExecStop=/home/kafka/kafka/bin/zookeeper-server-stop.sh
 Restart=on-abnormal
 
