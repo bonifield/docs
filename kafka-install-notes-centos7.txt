@@ -13,7 +13,12 @@
 # STEP 0 - INSTALL JAVA 8
 #=============
 # if no network connectivity
-# sudo dhclient ens33
+#	sudo dhclient ens33
+# edit the config /etc/sysconfig/network-scripts/ifcfg-ens33 (or substitute another interface name instead of ens33)
+#	ONBOOT=yes
+# save and exit
+#	sudo ifdown ens33
+#	sudo ifup ens33
 sudo yum install java-1.8.0-openjdk -y
 
 
