@@ -86,6 +86,7 @@ zip [options] [-b path] [-t mmddyyyy] [-n suffixes] [zipfile list] [-xi list]
 zip myarchive.zip file*
 zip myarchive.zip file1 file2
 zip -r output.zip /some/folder - compresses a folder structure into a zip
+zip -e output.zip *.json - password protects the new zip of json files
 zip -d myarchive.zip file-to-delete.jpg
 unzip myarchive.zip
 

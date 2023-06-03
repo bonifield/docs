@@ -1,14 +1,14 @@
 #====================
 # Bro Cutting
 #====================
-bro -Cr file.pcap (generates the logs)
-bro-cut -d field1 field2 < somefile.log
-- omit specific fields to cut all
-- < means slurp from, vs cat piping
-- -d is human-readable timestamp (ts) field
-
 Find what fields are in a log
-head -n file.log | grep -P '^#fields' | sed -e 's/\t\+/ /g'
+head file.log | grep -P '^#fields' | sed -e 's/\t\+/ /g'
+
+zeek -Cr file.pcap (generates the logs)
+zeek-cut -d field1 field2 < somefile.log
+- omit specific fields to cut all
+- < means slurp from file; cat then pipe into zeek-cut for wildcard filenames
+- -d is human-readable timestamp (ts) field
 
 Create various data exports with bro-cut
 Make simple CSV:
@@ -16,7 +16,7 @@ bro-cut somefile.log | tr '\t' ','
 
 Make CSV with column names:
 head somefile.log | grep -P '^#fields' | tr '\t' ',' | sed -e 's/#fields,//g' > somefile.log.csv
-bro-cut somefile.log | sed -e 's/\t\+/,/g' >> somefile.log.csv
+zeek-cut somefile.log | sed -e 's/\t\+/,/g' >> somefile.log.csv
 (sometimes you may need a different delimeter, when commas may be a value in a log field)
 
 Enable Heartbleed, SMB, and VLAN Logging:
