@@ -1,0 +1,222 @@
+#=============
+# PowerShell Notes
+# mostly sourced from the class guide
+#=============
+
+# add new local user and add them to local Administrators group
+	New-LocalUser "usernamehere" -Description "some new user"
+		- optional:
+			$password =  ConvertTo-SecureString  -AsPlainText "newpasswordasavariable" -Force
+			New-LocalUser "usernamehere" -Password $password -Description "some new user"
+	Add-LocalGroupMember -Group "Administrators" -Member usernamehere
+	Remove-LocalGroupMember -Group "Administrators" -Member usernamehere
+	Remove-LocalUser "usernamehere"
+
+# verb-noun syntax
+# common verbs:
+	Get - display or retrieve data
+	Set - input or change data
+	Enable / Disable - turn feature on/off
+	New - create a new item or object
+	Remove - delete data
+	Add - append data
+
+# help and aliases
+	Get-Help [cmdlet] - show help information for a cmdlet
+	Get-Alias (gal) - show all aliases
+	Get-Command (gcm) - show all available cmdlets
+	Update-Help - run as admin - updates the help files
+	-WhatIf - perform dry run - use at end of command string
+	Get-Member (gm)- see properties of cmdlet
+		Get-ChildItem | gm
+
+# variables - prefixed with $ - ex. $var
+	- post-pipe ForEach-Object{...} will use "$_" to reference the looping variable
+	ForEach-Object{some-command} - post-pipe iterate over objects from pre-pipe results
+		- alias is %{}
+		- post-pipe looping variables can be referenced with $_ or $_.attribute
+			Get-ChildItem C:\some\path | %{Write-Host $_.Name}
+
+# escape characters
+	backtick (`)
+	- add tab:  `t
+	- add newline:  `n
+
+# wildcards
+	? - represents single character
+		Get-Service VM?are?ostd
+	* - any characters
+		Get-Service *VMware*
+
+# dot - access object members, such as properties or methods
+	$_.FullName
+	- see members - Get-Command Get-Service | Get-Member
+	- or use:	gcm Get-Service | gm
+	
+# grouped expression - run sub commands (for comparisons, etc)
+	(x+3) * 5
+	echo (1+1)
+
+# sorting
+	cmdlet | Sort-Object Name -Descending
+
+# selecting columns
+	Select-Object (select)
+	cmdlet | select name,ws
+
+# capture user input
+	Read-Host "enter a number"
+	$x = Read-Host "enter a number"
+		type $x then enter; will return the entered number
+
+# change data type [int|string|float|...]
+	$x = "4" - is a string
+	[int]$x = $x - converted to int
+	$x.GetType(); - see type information for variable
+
+# Execution Policies
+	Restricted - default policy - no scripts can be called to run except select Microsoft-signed scripts
+	AllSigned - only scripts signed by a trusted publisher
+	RemoteSigned - downloaded scripts must be signed by a trusted publisher to run
+	Unrestricted - any script can run
+	Bypass - does not check execution policy; this level must be set by administrator
+		- Set-ExecutionPolicy RemoteSigned
+
+# Remote PowerShell Administration
+	remote computer:
+		Enable-PSRemoting - allow receiving of remote cmdlets
+		New-PSSession - create persistent "remote" session
+	local computer
+		Set-Item WSMan:\localhost\Client\TrustedHosts -Value a.b.c.d (remote IP address)
+		$cred - Get-Credential, then input the username and password of the remote username
+		Enter-PSSession x.x.x.x -Credential $cred
+		exit
+
+# manage output from commands
+	Write-Host "text"
+		Write-Host "test" -ForegroundColor White -BackgroundColor DarkMagenta
+			Get-ChildItem C:\Users\bob\Desktop -Recurse | %{Write-Host $_.FullName -ForegroundColor White -BackgroundColor DarkMagenta}
+			Get-ChildItem C:\Users\bob\Desktop -Recurse | %{Write-Host $_.Extension `t $_.FullName}
+	Format-List (fl), Format-Table (ft), Format-Custom (fc), Out-Gridview (ogv), ConvertTo-JSON, Export-CSV [filepath]
+	echo "text"
+
+# list contents of folder
+	Get-ChildItem
+		-File - return only files, not directories
+		-Recurse - return contents of directory and all subdirectories
+		-Force - include system hidden files
+		-Attributes - only show results with specified attributes
+	- useful with ForEach-Object{} / %{}
+		- $_.Attributes (hidden, archive, etc), $_.Extension, $_.Name, $_.FullName
+
+# loop over results
+	ForEach-Object{some-command} - post-pipe iterate over objects from pre-pipe results
+		- alias is %{}
+		- post-pipe looping variables can be referenced with $_ or $_.attribute
+			Get-ChildItem C:\some\path | %{Write-Host $_.Name}
+
+# see contents of file (like cat/gc)
+	Get-Content - each line treated as an object (accessible by ForEach-Object and Where-Object)
+		-Delimiter [string] - specify delimiter to access each object
+		-ReadCount [num] - specify number of lines per object to pass through a pipe
+		-Tail [num] - see num lines at bottom of file
+		-TotalCount [num] - retrieve specifed number of lines at top of file
+	get a linecount - use subquery with parenthesis
+		(Get-Content C:\Users\bob\Desktop\desktop.ini).Count
+
+# hash a file
+	Get-FileHash C:\some\path
+		-Algorithm - MD5, SHA1, SHA256
+	- useful properties:  $_.Hash, $_.Path
+	- iterate over filepath and hash files
+		Get-ChildItem C:\Users\bob\Desktop -Recurse -File | %{$_ | Get-FileHash}
+
+# see network connections
+	Get-NetUDPEndpoint
+	Get-NetTCPConnections
+		-LocalAddress, RemoteAddress, LocalPort, RemotePort [port] - filter for these options
+		- useful properties:  .OwningProcess, .State
+	0.0.0.0 or :: means the host is acting as a server and listening on all network addresses
+
+# export / import modules
+	Export-Module -Function [funcName]
+		Export-Module -Function "Get-*" (exports all Get functions)
+	Export-Module -Variable [varName]
+	Import-Module C:\some\script.psm1
+
+# regex
+	-match "text" (case-insensitive)
+	-cmatch "text" (case-sensitive)
+
+# Where-Object (?) - checks each row for condition
+	Get-Service | ?{$_.Name -match "VMwa"} | %{echo $_.Name}
+
+# if-statements
+	if (condition1) {action1} elseif (condition2) {action2} else {action3}
+	-lt, -le, -gt, -ge, -eq, -ne, -contains, -notcontains
+	[int]$x = 5
+	if ($x -gt 10) {
+		echo "$x > 10"
+	} elseif ($x -lt 10) {
+		echo "$x < 10"
+	} else {
+		echo "$x = 10"
+	}
+
+# for-loops
+For (<assign variable>; <conditional>; <increment variable>) {script;}
+	For ($i = 1; $i -le 10; $i = $i + 1) {
+		Write-Host $i;
+	}
+
+# while-loops
+While (<condition>) {<script>;}
+	$i = 0;
+	While ($i -ne 10) {
+		$i = $i + 1;
+		Write-Host $i;
+	}
+
+# functions
+Function <name> {commands}
+	Function Get-HighMemUse {
+		GetProcess |
+		Sort-Object ws -Descending |
+		Select-Object -First 5 -Property name,ws
+	}
+	Get-HighMemUse
+
+#-------------
+# cmdlets of note
+#-------------
+Get-Package
+Get-HotFix
+Get-LocalUser
+Get-ChildItem (gci)
+Get-Process (gps)
+Get-Service (gsv)
+Get-ItemProperty (gp)
+Get-WinEvent
+Get-Content (gc)
+Write-Host
+Get-FileHash
+Get-WmiObject (gwmi)
+Get-CimInstance (gcim)
+
+#-------------
+# Side Projects
+#-------------
+
+# delete all files matching pattern in folder
+Get-ChildItem -Path "C:\Users\bob\accidental\duplicates" -Recurse | Where-Object {$_.Name -match "\(1\)" -or $_.Name -match "\(2\)"} | rm 
+
+# function with if / elseif and if-this-or
+$results = Get-ChildItem -Path "C:\Users\bob\accidental\duplicates" -Recurse
+foreach ($file in $results) {
+    if ($file -match "\.exe" -or $file -match "\.dll") {
+    Write-Host $file.FullName
+    }
+elseif ($file -match "\.pdf") {
+    Write-Host $file.FullName
+    }
+}

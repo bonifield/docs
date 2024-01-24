@@ -1,0 +1,119 @@
+#=============
+# WMIC Notes
+#=============
+
+# Resources
+https://andreafortuna.org/command-line/windows-command-line-cheatsheet-part-1-some-useful-tips/
+https://andreafortuna.org/dfir/windows-command-line-cheatsheet-part-2-wmic/
+http://resources.infosecinstitute.com/commandline-malware-and-forensics/
+
+# Basic grammar
+	C:> wmic [alias|commandFrom/?] [where clause] [verb clause(get|call|list|table|every)] [optional-args]
+	C:> wmic [output] /user:"user@domain" /password:"password" /node:"IP" [alias] [where] [verb] [switch]
+
+# Enter and leave WMIC prompt:
+	C:> wmic
+	wmic:root\cli> exit (or quit)
+	# not using the WMIC terminal means commands like type, fc, sort, and find can still be used
+
+# Saving data to a file
+	# Using post-pipe DOS commands
+		C:> wmicstuff | doscmd > "full filepath" 2>&1
+	# Using WMIC output commands
+		C:> wmicstuff /output:[stdout|clipboard|filename] [actions]
+		C:> wmicstuff /output:[stdout|clipboard|filename] [actions] /format:table
+		C:> wmicstuff /append:[stdout|clipboard|filename] [actions]
+		C:> wmicstuff /record:filename
+	# Output FormatsCSV
+		# Table
+			wmic /append:filename.txt [alias] [where] [verb] /every:1 /format:table
+		# List (less useful)
+			wmic /append:filename.txt [alias] [where] [verb] /every:1 /format:list
+		# CSV
+			wmic /append:filename.csv [alias] [where] [verb] /every:1 /format:csv
+		# XML
+			wmic /append:filename.xml [alias] [where] [verb] /every:1 /format:xml
+		# HTML - properties on separate rows
+			wmic /output:filename.html [alias] [where] [verb] /format:hform
+		# HTML (better) - objects on separate rows
+			wmic /output:filename.html [alias] [where] [verb] /format:htable
+
+# Help info
+	C:> wmic /?
+	# see total line count, excluding blank lines
+		C:> wmic /? | find /c /v ""
+	# see properties (columns) for get
+		C:> wmic [alias] get /?
+
+# See global switch states
+	C:> wmic context
+
+# Useful aliases
+	process, service, output, share, nicconfig, startup, useraccount, qfe (Quick Fix Engineering - shows patches)
+
+# Example where clauses
+	where name="nc.exe"
+	where (somecommand like "%stuff")
+	where (name="cmd.exe" and parentprocessid!="pid")
+
+# Example verb clauses
+	list [full|brief] - default tabular view which scrolls
+	get [attrib1,attrib2...] - extracts values from the filter headers (ex. get column1,column2...), use get /? to see all properties/columns
+	call [method] - invoke subfunctions
+	every:[x] - timer interval, repeat command every x seconds
+	delete
+	/format:table
+
+# List all attributes of alias:
+	C:> wmic [alias] get /?
+# List all callable methods of alias:
+	C:> wmic [alias] call /?
+
+# Output data example - process list
+	C:> wmic /output:"C:\Users\bob\Desktop\processlist.txt" process list brief
+
+# List data examples
+	C:> wmic baseboard
+	C:> wmic baseboard list brief
+	C:> wmic baseboard list full
+	C:> wmic baseboard list full | find /i "manufac"
+	C:> wmic useraccount get caption,name,sid
+
+# Start/Terminate an application
+	C:> wmic process call create "calc.exe"
+	C:> wmic process where name="calc.exe" call terminate
+
+# Turn on RDP remotely
+	C:> wmic /node:”servername” /user:”user@domain” /password: “password” RDToggle where ServerName=”server name” call SetAllowTSConnections 1
+
+# See enabled/disabled accounts
+	C:> wmic useraccount where disabled=0 get name,domain,status,sid
+	C:> wmic useraccount where disabled=1 get name,domain,status,sid
+
+# Find shares and user-created shares
+	C:> wmic share list
+	C:> wmic share where "not name like '%$'" get name,path
+
+# Set static IP
+	C:> wmic nicconfig where index=9 call enablestatic("192.168.1.17", "255.255.255.0")
+	C:> wmic nicconfig where index=9 call setgateways("oldGatewayIP", "newGatewayIP"),(1,2)
+# Enable DHCP
+	C:> wmic nicconfig where index=9 call enabledhcp
+
+#=============
+# noteworthy
+#=============
+
+C:> wmic useraccount list brief
+	C:> wmic /output:"C:\Users\bob\Desktop\users.csv" useraccount list brief /format:csv
+C:> wmic group list brief
+C:> wmic share get
+C:> wmic qfe list brief
+C:> wmic nicconfig list brief
+C:> wmic product list brief
+C:> wmic /node:[targetIP] /user:[username] /password:[pass] process list brief
+C:> wmic process get name,parentprocessid,processid,commandline
+	C:> wmic process where (name="conhost.exe" and processid="7088") get name,parentprocessid,processid
+	C:> wmic process where (name="conhost.exe" and processid="7088") list full /format:table
+	C:> wmic /append:"C:\Users\bob\Desktop\tracker.txt" process where (name="notepad.exe") get name,parentprocessid,processid,command /every:1
+C:> wmic startup get /ALL

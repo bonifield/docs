@@ -1,0 +1,117 @@
+#=============
+# gcc notes
+# 2019-06-14
+#=============
+
+
+gcc file.c -o file.exe
+	-o - output filename after compilation
+	-g - optionally include .debug_info section
+
+
+gcc -c file.c
+	-c - create a .o object file; LSB (least significant bit comes first in memory); relocatable, can be moved without breaking code assumptions; can then be linked in any order
+
+
+gcc -E -P file.c
+	-E - tells gcc to stop after pre-processing, variable expansion and substitution, etc and show intermediate output
+	-P - omit debugging information
+
+
+gcc -S -masm=intel file.c
+	-S - create a .s file with assembly instructions
+	-masm=intel - output in Intel syntax; otherwise defaults to AT&T syntax
+
+
+#=============
+# readelf notes
+#=============
+
+
+readelf -wi file.exe
+	- shows .debug_info section, if included with gcc -g
+	-wi - debug dump, info output
+
+
+readelf -p .interp file.exe
+	-p - dumps contents of section as strings
+	-x - as bytes
+
+
+readelf -h file.exe
+	-h - view ELF header details
+
+
+readelf --syms file.exe
+	--syms - view symbolic information in .dynsym, .stymtab, and similar sections
+
+
+readelf --relocs file.o
+	--relocs - view relocation symbols in an object file
+		- offset - where resolved reference must be filled in; tells linker to resolve reference to the string (sym. name) to point to whatever address is in .rodata
+			(lines up with objdump -d output)
+
+readelf --section -W file.exe
+	--section - show sections
+	-W / --wide - allow wider output, no line-wrapping addresses
+
+
+#=============
+# strip notes
+#=============
+
+
+strip --strip-all file.exe
+	-s / --strip-all - removes all but only the absolutely-necessary dynamic dependency symbols
+
+
+#=============
+# objdump notes
+#=============
+
+
+objdump -sj .rodata file.exe
+	-s - display the relocation objects in a file
+	-j / --section [section] - dump a specific section, eg. the read-only section, which is where all constants are stored
+
+
+objdump -M intel -d file.exe
+	-M [intel|att] - pass option to disassembler, eg. display in Intel format (there are many options)
+	-d - disassemble
+
+objdump -M intel --section .plt -d file.exe
+	-j / --section [section] - specify a section to focus
+
+
+#=============
+# misc
+#=============
+
+
+xxd -l 16 file.exe
+	-l - only process length bytes of input
+
+
+hexdump -C -n 16 file.exe
+	-C - canonical output (offset, 16 space-separated 2-column zero-filled hex bytes, %_p formatted ascii bytes)
+	-n - only process length bytes of input
+
+
+less -S /usr/include/elf.h
+
+
+ldd file.exe
+	- load dynamic dependencies
+
+
+nm file.exe | c++filt
+	- use nm to view symbols, c++filt to de-mangle names
+
+
+ndisasm -u file.exe
+	- generates a disassembly listing of a binary file
+	-u - 32-bit mode
+
+
+
+

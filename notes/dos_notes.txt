@@ -1,0 +1,196 @@
+#=============
+# Windows DOS Command Notes
+# oriented towards enumeration and system usage, not administrative purposes
+#=============
+
+# increase width and buffer
+	mode con:cols=120 lines=9999
+
+# clear screen
+	cls
+
+# change title and color of terminal
+	title "newtitle"
+	color /? (by itself reverts the prompt to what it was when opened)
+	color [bg][fg], ex. color 5b (Ubuntu colors)
+
+# navigation & redirection
+	[driveletter], cd [drive:]\your\path, cd.., mkdir, rmdir /S
+	[command] > file.txt, [command] >> appendToMe.txt, [command] 2>nul (send stderr to sinkhole)
+	start . ("start space dot") - launch Windows explorer window in current directory
+
+# view local administrators
+	net localgroup
+	net localgroup administrators
+	net localgroup administrators /domain
+# add new local admin account
+	net user /add [username] [password]
+	net localgroup administrators [username] /add
+# add domain user to local administrator group
+	net localgroup administrators domain.local\[username] /add
+# add new domain user
+	net user /add [username] [password] /domain
+# add domain user to domain admins
+	net group /add "Domain Admins" username /domain
+
+# add / delete folder
+	md [path]
+	rd [path] /s /q
+		/s - remove subdirectories and files
+		/d - quite mode
+
+# finding lines or files
+	[somecommand] | find /i "thingYouWant"
+		/i - case insensitive
+		/v "dontwant" - negative find, exclude lines including match (/v "" to omit blank lines)
+		/c - (line count)
+	dir /b /s "C:/Users/bob/" | find /i "passwords"
+		# /b - bare format, /s - display files in specified dir and all subdirs
+	attrib - file name searches
+		attrib /S /D C:\*thing*.*
+			/S - search system files as well
+			/D - also include folder names
+			C:\*thing*.*
+	findstr - content searches
+		findstr /P /I /S "searchme" C:\*.*
+			/P - printable characters
+			/I - ignore case
+			/S - all sub directories
+			C:\*.*
+		findstr /P /I /S "password" c:\users\bob\*.*
+
+
+# robocopy folder and subdirectories
+	robocopy [srcpath] [dstpath] /e
+		/e - subdirectories and files (omit for just top folder)
+
+# xcopy directory tree and files, make dst folder path if it doesn't already exit
+	xcopy C:\src\path C:\dst\path /i /e /y
+		/i - create dst if it doesn't exist already (if copying multiple files)
+		/e - copy directories and subdirectories, including empty ones
+			/s - exclude empty subdirectories
+			/t - copy just folder structure, but no files
+		/y - overwrite / clobber
+			/-Y - prompt for overwrite
+
+# copy [srcpath] [dstpath]
+	# concat multiple files to an output file (many-to-one)
+		copy [src1+src2+src3] [dst] (or use wildcards)
+
+# move and rename files/folders
+	move [srcpath] [dstpath]
+	rename [old] [new]
+
+# see processes and/or services hosted in those processes
+	tasklist
+	tasklist /svc
+	tasklist /m
+	tasklist /m [dll]
+	
+# netstat - see network statistics
+	# old systems (pre-Win7)
+		netstat -an
+	# see main connections
+		netstat /bano
+			/b - show executable associated with connection
+			/a - show all connections and listening ports
+			/n - show numeric IPs and ports (don't resolve names)
+			/o - show owning PID
+	# specific protocol info
+		netstat /e
+		netstat /nes
+		netstat /nes /p TCP
+			/e - show Ethernet stats
+			/s - show per-protocol statistics (default IP, IPv6, ICMP, ICMPv6, TCP, TCPv6, UDP, UDPv6)
+			/p [protocol] - show specific protocol stats
+
+# nbtstat - see protocol stats and TCP/IP sessions over NBT
+	nbtstat -nS
+		-n - list local NetBIOS names
+		-S - list sessions with dest IP addresses
+			-s - show NetBIOS names
+	nbtstat -A [remoteIP]
+
+# tracert - trace router hops - sends three packets, measures round-trip-times
+	output columns - hop-number / rtt1 / rtt2 / rtt3 / hop-IP
+	tracert /d - don't resolve names
+		/w [timeout] - millisecond timeout
+		/h [hops] - set max hops (default is 30)
+
+# ping
+	/t - continuous, stop with CTRL+C
+	/n [num] - ping num times
+
+# nslookup [server]
+	nslookup
+		> [IP/domain] # basic query
+		> set type=any # see all records
+		> server [dnsserver] # switch to context of their nameserver
+		> ls -d [dnsserver] # zone transfer
+
+# view a text file
+	type [file] | more
+
+# edit a text file
+	32-bit - edit [file]
+	64-bit - copy con [file] # end with ctrl+z
+
+# set environment variables (ex. path)
+	set OLDPATH=%PATH%
+	set PATH=%PATH%;\new\dir\here
+	echo %PATH%
+
+# sc - communicate with services
+	sc <\\servername> [command] [service name] <option1> <option2>...
+		# sc [command] - get help for command
+	# see all services - like PS "get-service"
+		sc query | find /i "thing"
+		sc query [service]
+		sc queryex type= service state= all
+	# view/edit path for executed binary
+		sc qc [service]
+		sc config [service] binPath= 'cmd.exe /k c:\path\to\binary.exe' # note the space after "binPath="
+	# start / stop
+		sc [start|stop] [service]
+
+# map long local folderpath as local drive letter:
+	cd [long-folder-path]
+	subst x: .
+
+# map a remote share as local drive, assign next available drive letter
+	*** the credentials used must exist on the box with the share (the distant end, not local) ***
+	net use * \\<ip_address>\<share_name>[\volume] <password> /user:<ip_address_where_share_is>\<username>
+	net use * \\a.b.c.d\c$ mypassword /user:\\a.b.c.d\userdude
+# make share drive accessible across the network
+	net share MyShare="path\to\share" /GRANT:Everyone,FULL
+		ex. AwesomeShare=C:\Users\bob\share\	-->	\\1.2.3.4\AwesomeShare
+# delete share drive (stop sharing)
+	# delete by share name
+		net share MyShare /delete
+	# delete by phyical path
+		net share C:\Users\bob\share\ /delete
+	# delete remote share
+		net share YourShare \\remotepc /delete
+
+# add/delete firewall rules
+	netsh advfirewall firewall add rule name="bob allow" dir=[in|out] interface=any action=[allow|block|bypass] remoteip=[IP|CIDR]
+	netsh advfirewall firewall delete rule name="bob allow"
+	# don't have symbols in the name, only alphanum and spaces
+
+# disable firewall (pre-7/8/10)
+	netsh firewall set opmode disable
+
+# psexec cmd.exe /c [command]
+
+# loops
+	# /L - number loops, /F - flexible loops
+	*** including "@" before a command will silence the loop echoing on stdout
+	for /L %i in (start,step,stop) do [command]
+	for /L %i in (1,1,255) do @ping -n 1 192.168.1.%i | find "TTL"
+	for /F %i in (somefile) do @somecommand
+
+# batch loops - spawn new cmd windows with individual pings in each window
+	@echo off
+	Set "newbox=start cmd /k"
+	Set SERVERS=value1,value2...
+	For %%* in (%SERVERS%) do %newbox% PING.exe %%* -t

@@ -1,0 +1,52 @@
+#=============
+# Netcat Notes
+#=============
+
+-k - Linux persistent listener
+-L - Windows persistent listener
+
+# Client - connects out to remote server
+	nc [remoteIP] [remotePort]
+
+# Server - listens for connections
+	nc -vvlp [portListener]
+		-l - listen mode
+		-vv - very verbose
+		-p - set remote port
+			# keep listener running for multiple connections
+			-k - keep open (-L on Windows, "Listen Harder")
+
+# Send single file to listener
+	(server)	nc -lp 6789 > file.txt
+	(client)	nc 1.2.3.4 6789 < file.txt
+
+# Send multiple files via tarball
+	(server)	nc -lp 6789 | tar -x
+	(client)	tar -c file1 file2 | nc 1.2.3.4 6789
+
+# Bind shell to port (ncat or some nc versions), allow and deny accesses to defined networks, limit number of max connections, set local port, keep open
+	(server)	ncat -e "/bin/bash" --allow 192.168.0.0/24 --deny 172.16.0.0/16 --max-conns 3 -l 1337 -k
+					-e [path] - must be full path to executable
+	(client)	 nc 1.2.3.4 6789 (user will receive an invisible prompt on the server machine)
+
+# Bind shell to port (versions without -e / --exec; from the nc man page)
+	(server)	rm -f /tmp/; mkfifo /tmp/f
+			cat /tmp/f | /bin/bash -i 2>&1 | nc -l 127.0.0.1 6789 > /tmp/f
+	(client)	nc 1.2.3.4 6789
+
+# Linux backpipe (Relay Mode - workaround for ports that are blocked by a firewall)
+	# on relay/middlebox/target:
+		mknod mypipe p
+		nc -lvvkp [firewall-allowed-port] 0<mypipe | nc 127.0.0.1 [firewall-blocked-port]
+	# on client box (ex. SSH):
+		ssh [user]@[IP] -p [firewall-allowed-port]
+
+# Pipe printf content through NC
+printf "GET / HTTP/1.0\r\n\r\n" | nc -v scanme.nmap.org 80
+# or
+nc -vvC www.somesite.org 80
+HEAD / HTTP/1.0
+	# enter twice (no Host field required), get response
+HEAD / HTTP/1.1
+Host: somesite.org
+	# enter twice
